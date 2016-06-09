@@ -75,3 +75,56 @@ Download successful.
 11:48:31 INFO * File session ended *
 
 
+14:30:16 INFO * File session started *
+14:30:18 INFO * File session ended *
+
+
+10:53:34 INFO * File session started *
+10:53:59 INFO File type: .wav
+10:54:02 INFO Filename: hello
+10:54:04 WARNING Directory in path does not exist: wavfiles
+10:54:05 INFO Request ID: 375832948 (placeholder)
+10:54:05 INFO Download successful.
+10:54:34 INFO Output: Stream.
+10:54:36 INFO Request ID: 375832948 (placeholder)
+10:54:36 INFO Stream successful.
+10:54:57 INFO Output: Stream.
+10:55:02 INFO Request ID: 375832948 (placeholder)
+10:55:02 INFO Stream successful.
+10:55:22 INFO Output: Stream.
+10:55:22 INFO Request ID: 375832948 (placeholder)
+10:55:22 INFO Stream successful.
+10:55:44 INFO Output: Stream.
+10:55:46 INFO Request ID: 375832948 (placeholder)
+10:55:46 INFO Stream successful.
+10:56:23 INFO * File session ended *
+
+
+10:57:16 INFO * File session started *
+10:57:25 WARNING Invalid input for VoiceID:    Unfortunately, the next flight doesn't leave for another five hours.
+10:57:25 WARNING Invalid input for streamBool: </express-as>
+10:57:35 INFO File type: .ogg
+10:57:41 INFO Filename: hm
+10:57:43 INFO Request ID: 375832948 (placeholder)
+10:57:43 INFO Download successful.
+10:58:47 INFO Output: Stream.
+10:58:47 INFO Request ID: 375832948 (placeholder)
+10:58:47 INFO Stream successful.
+13:00:03 WARNING Invalid input for VoiceID: %3E%20paragraph.%3C/s%3E%3Cs%3EHere\%27s%20%3Cemphasis%20level=\\%22strong\\%22%3Eanother%3C/
+13:00:03 WARNING Invalid input for streamBool: emphasis%3E%20sentence.%3C/s%3E%3Cs%3EFinally,%20this%20is%20the%20last%20sentence.%3C/s%3E%3C/
+13:00:05 WARNING Invalid input for formatBool: p%3E%221
+13:00:05 INFO File type: .ogg
+13:00:13 INFO Filename: dur
+13:00:17 INFO Request ID: 375832948 (placeholder)
+13:00:17 INFO Download successful.
+13:00:19 INFO * File session ended *
+
+
+13:00:44 INFO * File session started *
+13:07:36 INFO File type: .wav
+13:07:39 INFO Filename: ssmltest
+13:07:44 INFO Request ID: 375832948 (placeholder)
+13:07:44 INFO Download successful.
+13:07:45 INFO * File session ended *
+
+

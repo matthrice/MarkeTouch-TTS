@@ -18,7 +18,7 @@ Logger = logging.getLogger("main_test_log")
 #class inherits the Test Case from the module
 class MainTestCase(unittest.TestCase):
 
-	
+
 	#test for the default constructor of the watson class
 	def test_watson_init(self):
 		#creates a simple watson object with junk class members
@@ -32,15 +32,15 @@ class MainTestCase(unittest.TestCase):
 		self.assertEqual(watson.url, 'url_1')
 		self.assertEqual(watson.chunk, 1024)
 		self.assertEqual(watson.accept, 'accept_1')
-	
+
 	#tests the request module
-	#part of the download() and stream() functions	
+	#part of the download() and stream() functions
 	'''
 	def test_download_request(self):
 
 		requests.packages.urllib3.disable_warnings()
-		
-		#create a working watson object	
+
+		#create a working watson object
 		watson = Watson(USERNAME, PASSWORD, "en-US_AllisonVoice", URL, CHUNK_SIZE, 'audio/wav')
 
 		text = 'Request test'
@@ -51,7 +51,7 @@ class MainTestCase(unittest.TestCase):
                            verify=False
                            )
 
-		self.assertEqual(r.status_code, requests.codes.ok, 
+		self.assertEqual(r.status_code, requests.codes.ok,
 						 "Bad request, invalid response status code")
 
 
@@ -122,12 +122,11 @@ class MainTestCase(unittest.TestCase):
 
 
 
-                
-		
+
+
 
 
 
 
 if __name__ == '__main__':
 	unittest.main()
-
