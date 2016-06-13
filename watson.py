@@ -11,7 +11,7 @@ class Watson:
 	NCHANNELS = 1
 
 	#initializes parameters for authorization and conversion
-	def __init__(self, username, password, voice, 
+	def __init__(self, username, password, voice,
 				 url, chunk, accept):
 		self.username = username
 		self.password = password
@@ -44,9 +44,11 @@ class Watson:
 			for chunk in r.iter_content(self.chunk):
 				fd.write(chunk)
 
+		return filename
+
 	#reads in input and determines if more than one file is needed to download
 	#REQUIRES: Text is in format of *LANGUAGE text
-	#EFFECTS: Produces a single file if no language change, or produces several 
+	#EFFECTS: Produces a single file if no language change, or produces several
 	#files with a number extension marking their order if text uses multiple
 	#languages
 	def writeFiles(self, text, filename, path):
@@ -63,6 +65,10 @@ class Watson:
 		elif self.accept == "audio/ogg;codecs=opus":
 			extension = ".ogg"
 
+		#empty list for storing filenames
+		#will be used later in main for conversion to vox
+		fileList = []
+
 		#splits the strings into a list, separated by the symbol (*)
 		text = text[1:]
 		stringList = text.split('*')
@@ -72,28 +78,39 @@ class Watson:
 			count += 1
 			#splits the string from the language variable
 			a, b = string.split(" ", 1)
-			#creates a spanish file 
+			#creates a spanish file
 			if a == "Spanish":
 				self.voice = "es-US_SofiaVoice"
 				#checks if no language change, if so leaves off count
 				if len(stringList) == 1:
-					self.download(b, filename + extension, path)
+					#downloads file, also appends to fileList
+					f = self.download(b, filename + extension, path))
+					fileList.append(f)
 				else:
-					self.download(b, filename + str(count) + extension, path)
+					f = self.download(b, filename + str(count)
+									  + extension, path))
+					fileList.append(f)
 			#creates an english file
 			elif a == "English":
 				self.voice = english
 				#checks if no language change, if so leaves off count
 				if len(stringList) == 1:
-					self.download(b, filename + extension, path)
+					f = self.download(b, filename + extension, path)
+					fileList.append(f)
 				else:
-					self.download(b, filename + str(count) + extension, path)
+					f = self.download(b, filename + str(count)
+					                  + extension, path)
+					fileList.append(f)
+
+		#returns a list of all files written
+		#useful later for vox conversion and merging
+		return fileList
 
 	#streams the file using pyaudio
 	#REQUIRES: stream is a valid instantiation of pyaudio stream
 	#EFFECTS: creates an output stream
 	def stream(self, text, stream):
-		
+
 		#request is made for the speech audio file, recieves response
 		#stream is set to true so the data will not be downloaded at once
 		r = requests.get(self.url + "/v1/synthesize",
@@ -142,7 +159,7 @@ class Watson:
 			count += 1
 			#splits the string from the language variable
 			a, b = string.split(" ", 1)
-			#streams a spanish file 
+			#streams a spanish file
 			if a == "Spanish":
 				self.voice = "es-US_SofiaVoice"
 				self.stream(b, stream)
