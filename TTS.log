@@ -128,3 +128,49 @@ Download successful.
 13:07:45 INFO * File session ended *
 
 
+11:03:24 INFO * File session started *
+11:03:44 INFO File type: .wav
+11:04:24 INFO Filename: one-language-test
+11:04:42 WARNING Directory in path does not exist: wavfiles
+11:15:42 INFO * File session started *
+11:15:58 INFO File type: .wav
+11:16:09 INFO Filename: one-lang-test
+11:18:19 INFO * File session started *
+11:18:40 INFO File type: .wav
+11:18:46 INFO Filename: one-lang-test
+11:18:49 INFO Request ID: 375832948 (placeholder)
+11:18:49 INFO Download successful.
+11:19:54 INFO * File session ended *
+
+
+11:21:12 INFO * File session started *
+11:21:31 INFO File type: .wav
+11:21:35 INFO Filename: one-lang-test
+11:21:39 INFO Request ID: 375832948 (placeholder)
+11:21:39 INFO Download successful.
+11:22:39 INFO * File session started *
+11:22:50 INFO File type: .wav
+11:22:53 INFO Filename: what
+11:22:57 INFO Request ID: 375832948 (placeholder)
+11:22:57 INFO Download successful.
+11:24:04 INFO * File session started *
+11:24:15 INFO File type: .wav
+11:24:20 INFO Filename: doesit
+11:24:24 INFO Request ID: 375832948 (placeholder)
+11:24:24 INFO Download successful.
+11:27:15 INFO * File session started *
+11:27:29 INFO File type: .wav
+11:27:33 INFO Filename: problem
+11:27:37 INFO Request ID: 375832948 (placeholder)
+11:27:37 INFO Download successful.
+11:31:06 INFO * File session ended *
+
+
+11:31:26 INFO * File session ended *
+
+
+13:55:57 INFO * File session started *
+13:56:20 INFO File type: .wav
+13:56:28 INFO Filename: doesnotmatter
+13:56:31 INFO Request ID: 375832948 (placeholder)
+13:56:31 INFO Download successful.
