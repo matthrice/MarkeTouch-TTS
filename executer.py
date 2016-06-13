@@ -1,8 +1,6 @@
 import subprocess
 
 
-fileList = ["piano2.wav"]
-
 #using wine because developing on a mac
 #remove when running on windows
-subprocess.call(['wine vcecopy.exe'] + fileList, shell=True)
+subprocess.call(r'copyfiles\vcecopy.exe wavfiles\piano2.wav wavfiles\piano2.vox', shell=True)

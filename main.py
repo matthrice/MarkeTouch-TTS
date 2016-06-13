@@ -150,32 +150,41 @@ def convertToVox(stringList):
     if len(stringList) == 1:
         #takes first and only element from the list
         for string in stringList:
+            filepath = string[0]
+            filename = string[1]
             #voxName is the new file for conversion, removes '.wav'
             #and replaces it with '.vox', so the file will still have the user's
             #desired name choice
-            voxName = string[-3:] + 'vox'
+            voxName = filename[:-3] + 'vox'
+            print(voxName)
+            fullPath = filepath + '\\' + filename
+            voxPath = filepath + '\\' + voxName
             #uses subprocess module to call a line for the command line
             #command line executes a script which should appear along the lines:
             # $ vcecopy.exe example.wav example.vox
-            subprocess.call("vcecopy.exe " + string + " " + voxName, shell=True)
+            subprocess.call(r"copyfiles\vcecopy.exe " + fullPath + " " + voxPath, shell=True)
             #vcecopy is an executable which does the actual conversion
 
             #the old .wav file is removed, leaving only the vox file
-            os.remove(string)
+            #os.remove(string)
     #if there are multiple files (language change) the conversion is different
     else:
         #cycles through files (each with a number on the end)
         for string in stringList:
+            filepath = string[0]
+            filename = string[1]
             #removes the number from the end of the files and '.wav'
             #adds '.vox' this time, because more characters are removed
-            voxName = string[-5:] + '.vox'
+            voxName = filename[:-5] + '.vox'
+            fullPath = filepath + '\\' + filename
+            voxPath = filepath + '\\' + voxName
             #from here the process is the same
             #vcecopy will append each file to the same voxName file
             #thus it will merge all wav files to one vox file
-            subprocess.call("vcecopy.exe " + string + " " + voxName, shell=True)
+            subprocess.call(r"copyfiles\vcecopy.exe " + fullPath + " " + voxPath, shell=True)
 
             #each time, old .wav files are removed, leaving one vox file
-            os.remove(string)
+            #os.remove(string)
 
 def main():
 

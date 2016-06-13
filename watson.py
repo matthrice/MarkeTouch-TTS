@@ -44,7 +44,7 @@ class Watson:
 			for chunk in r.iter_content(self.chunk):
 				fd.write(chunk)
 
-		return filename
+		return (path, filename)
 
 	#reads in input and determines if more than one file is needed to download
 	#REQUIRES: Text is in format of *LANGUAGE text
@@ -84,11 +84,11 @@ class Watson:
 				#checks if no language change, if so leaves off count
 				if len(stringList) == 1:
 					#downloads file, also appends to fileList
-					f = self.download(b, filename + extension, path))
+					f = self.download(b, filename + extension, path)
 					fileList.append(f)
 				else:
 					f = self.download(b, filename + str(count)
-									  + extension, path))
+									  + extension, path)
 					fileList.append(f)
 			#creates an english file
 			elif a == "English":
@@ -103,6 +103,8 @@ class Watson:
 					fileList.append(f)
 
 		#returns a list of all files written
+		#returns them as a list of 2 element lists
+		#each element contains both the filename and its path
 		#useful later for vox conversion and merging
 		return fileList
 
