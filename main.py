@@ -107,20 +107,29 @@ def isStream(Logger):
         return False
 
 #method to receive format of audio from user
+#also recieves if the file is to be converted into vox
+#returns a dictionary, in the format of (accept, voxBool)
 def requestFormat(Logger):
-    formatBool = input("Enter 1 for .wav, enter 0 for .ogg: ")
-    if not validBool(formatBool):
+    formatBool = input("Enter 1 for .wav, enter 2 for .ogg, enter 3 for .vox: ")
+    fInt = int(formatBool)
+    if fInt != 1 or fInt != 2 or fInt != 3:
         Logger.warning("Invalid input for formatBool: %s" % formatBool)
 
     #adjusts the accept variable based on response
-    if yesOrNo(formatBool):
+    if fInt == 1:
         accept = "audio/wav"
         Logger.info("File type: .wav")
-    else:
+        voxBool = False
+    elif fInt == 2:
         accept = "audio/ogg;codecs=opus"
         Logger.info("File type: .ogg")
+        voxBool = False
+    elif fInt == 3:
+        accept = "audio/wav"
+        Logger.info("File type: .vox")
+        voxBool = True
 
-    return accept
+    return {'accept':accept, 'voxBool':voxBool}
 
 #method to receive filename from user
 def requestFilename(Logger):
@@ -144,7 +153,7 @@ def requestPath(Logger):
     return location
 
 #method to convert wav file to vox
-def convertToVox(stringList):
+def convertToVox(stringList, Logger):
     #with only one element in the list, conversion is simple
     #extract filename, end with vox, convert
     if len(stringList) == 1:
@@ -158,11 +167,12 @@ def convertToVox(stringList):
             voxName = filename[:-3] + 'vox'
             print(voxName)
             fullPath = filepath + '\\' + filename
-            voxPath = filepath + '\\' + voxName
+            voxPath = r"%s\%s" % (filepath, voxName)
+            command = r"copyfiles\vcecopy.exe " + fullPath + " " + voxPath
             #uses subprocess module to call a line for the command line
             #command line executes a script which should appear along the lines:
             # $ vcecopy.exe example.wav example.vox
-            subprocess.call(r"copyfiles\vcecopy.exe " + fullPath + " " + voxPath, shell=True)
+            subprocess.call(command, shell=True)
             #vcecopy is an executable which does the actual conversion
 
             #the old .wav file is removed, leaving only the vox file
@@ -177,12 +187,13 @@ def convertToVox(stringList):
             #adds '.vox' this time, because more characters are removed
             voxName = filename[:-5] + '.vox'
             fullPath = filepath + '\\' + filename
-            voxPath = filepath + '\\' + voxName
+            voxPath = r"%s\%s" % (filepath, voxName)
+            command = r"copyfiles\vcecopy.exe " + fullPath + " " + voxPath
             #from here the process is the same
             #vcecopy will append each file to the same voxName file
             #thus it will merge all wav files to one vox file
-            subprocess.call(r"copyfiles\vcecopy.exe " + fullPath + " " + voxPath, shell=True)
-
+            subprocess.call(command, shell=True)
+            Logger.info("Files merged in vox conversion.")
             #each time, old .wav files are removed, leaving one vox file
             #os.remove(string)
 
@@ -214,7 +225,8 @@ def main():
             if isStream(Logger):
                 Logger.info("Output: Stream.")
                 #creates watson object, wav is default for stream
-                watson = Watson(USERNAME, PASSWORD, voiceID, URL, CHUNK_SIZE, 'audio/wav')
+                watson = Watson(USERNAME, PASSWORD, voiceID,
+                                URL, CHUNK_SIZE, 'audio/wav')
                 watson.playFiles(userInput)
 
                 #Request ID placeholder
@@ -222,16 +234,19 @@ def main():
                 Logger.info("Stream successful.")
             else:
                 #audio format input
-                accept = requestFormat(Logger)
+                audioFormat = requestFormat(Logger)
                 #filename and location input
                 filename = requestFilename(Logger)
                 location = requestPath(Logger)
 
                 #creates watson object
-                watson = Watson(USERNAME, PASSWORD, voiceID, URL, CHUNK_SIZE, accept)
+                watson = Watson(USERNAME, PASSWORD, voiceID,
+                                URL, CHUNK_SIZE, audioFormat['accept'])
                 #writes files
                 fileList = watson.writeFiles(userInput, filename, location)
-                convertToVox(fileList)
+                if audioFormat['voxBool']:
+                    convertToVox(fileList, Logger)
+                    Logger.info("Vox filed created.")
                 Logger.info("Request ID: 375832948 (placeholder)")
 
                 print("Audio file saved.")
