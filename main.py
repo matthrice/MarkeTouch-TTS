@@ -153,52 +153,52 @@ def requestPath(Logger):
     return location
 
 def convertToWav(filename):
-	wavName = filename[:-4] + '.wav'
-	command = ["ffmpeg", "-i", filename, wavName]
-	subprocess.call(command, shell=True)
+    wavName = filename[:-4] + '.wav'
+    command = ["ffmpeg", "-i", filename, wavName]
+    subprocess.call(command, shell=True)
 
     #removes ogg file
     os.remove(filename)
 
-	return wavName
+    return wavName
 
 def convertToVox(filename, voxName):
-	command = [r"copyfiles\vcecopy", filename, voxName]
-	subprocess.call(command, shell=True)
+    command = [r"copyfiles\vcecopy", filename, voxName]
+    subprocess.call(command, shell=True)
 
     #removes wav file
     os.remove(filename)
 
 #method to convert wav file to vox
 def fullConvert(stringList):
-	#with only one element in the list, conversion is simple
-	#extract filename, end with vox, convert
-	if len(stringList) == 1:
-		#takes first and only element from the list
-		for string in stringList:
-			filepath = string[0]
-			filename = string[1]
-			#voxName is the new file for conversion, removes '.wav'
-        	#and replaces it with '.vox', so the file will still have the user's
-        	#desired name choice
-			fullPath = filepath + '\\' + filename + '.ogg'
-			wavPath = convertToWav(fullPath)
-			voxPath = fullPath[:-4] + '.vox'
-			convertToVox(wavPath, voxPath)
+    #with only one element in the list, conversion is simple
+    #extract filename, end with vox, convert
+    if len(stringList) == 1:
+        #takes first and only element from the list
+        for string in stringList:
+            filepath = string[0]
+            filename = string[1]
+            #voxName is the new file for conversion, removes '.wav'
+            #and replaces it with '.vox', so the file will still have the user's
+            #desired name choice
+            fullPath = filepath + '\\' + filename + '.ogg'
+            wavPath = convertToWav(fullPath)
+            voxPath = fullPath[:-4] + '.vox'
+            convertToVox(wavPath, voxPath)
 
-	else:
+    else:
 
-		for string in stringList:
-			filepath = string[0]
-			filename = string[1]
-			filename = filename[:-1]
+        for string in stringList:
+            filepath = string[0]
+            filename = string[1]
+            filename = filename[:-1]
 
-			fullPath = filepath + '\\' + filename + '.ogg'
-			wavPath = convertToWav(fullPath)
-			voxPath = fullPath[:-4] + '.vox'
-			convertToVox(wavPath, voxPath)
+            fullPath = filepath + '\\' + filename + '.ogg'
+            wavPath = convertToWav(fullPath)
+            voxPath = fullPath[:-4] + '.vox'
+            convertToVox(wavPath, voxPath)
 
-			#the old .wav file is removed, leaving only the vox file
+            #the old .wav file is removed, leaving only the vox file
             #os.remove(string)
 
 def main():
@@ -222,7 +222,7 @@ def main():
         #phrase input
         userInput = requestPhrase(Logger)
         #breaks loop
-        if userInput != 'quit':
+        if userInput != 'quit':w
             #voiceID input (bool conversion to string)
             voiceID = requestVoiceID(Logger)
 
