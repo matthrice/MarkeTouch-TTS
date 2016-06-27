@@ -47,7 +47,7 @@ def createRotatingLog(path):
 def yesOrNo(string):
     if string == '1':
         return True
-    else:
+    if string == '0':
         return False
 
 
@@ -125,8 +125,8 @@ def requestFormat(Logger):
         Logger.info("File type: .ogg")
         voxBool = False
     elif fInt == 3:
-        accept = "audio/wav"
-        Logger.info("File type: .vox")
+        accept = "audio/ogg"
+        Logger.info("File type: .ogg")
         voxBool = True
 
     return {'accept':accept, 'voxBool':voxBool}
@@ -152,49 +152,53 @@ def requestPath(Logger):
 
     return location
 
-#method to convert wav file to vox
-def convertToVox(stringList, Logger):
-    #with only one element in the list, conversion is simple
-    #extract filename, end with vox, convert
-    if len(stringList) == 1:
-        #takes first and only element from the list
-        for string in stringList:
-            filepath = string[0]
-            filename = string[1]
-            #voxName is the new file for conversion, removes '.wav'
-            #and replaces it with '.vox', so the file will still have the user's
-            #desired name choice
-            voxName = filename[:-3] + 'vox'
-            print(voxName)
-            fullPath = filepath + '\\' + filename
-            voxPath = r"%s\%s" % (filepath, voxName)
-            command = r"copyfiles\vcecopy.exe " + fullPath + " " + voxPath
-            #uses subprocess module to call a line for the command line
-            #command line executes a script which should appear along the lines:
-            # $ vcecopy.exe example.wav example.vox
-            subprocess.call(command, shell=True)
-            #vcecopy is an executable which does the actual conversion
+def convertToWav(filename):
+	wavName = filename[:-4] + '.wav'
+	command = ["ffmpeg", "-i", filename, wavName]
+	subprocess.call(command, shell=True)
 
-            #the old .wav file is removed, leaving only the vox file
-            #os.remove(string)
-    #if there are multiple files (language change) the conversion is different
-    else:
-        #cycles through files (each with a number on the end)
-        for string in stringList:
-            filepath = string[0]
-            filename = string[1]
-            #removes the number from the end of the files and '.wav'
-            #adds '.vox' this time, because more characters are removed
-            voxName = filename[:-5] + '.vox'
-            fullPath = filepath + '\\' + filename
-            voxPath = r"%s\%s" % (filepath, voxName)
-            command = r"copyfiles\vcecopy.exe " + fullPath + " " + voxPath
-            #from here the process is the same
-            #vcecopy will append each file to the same voxName file
-            #thus it will merge all wav files to one vox file
-            subprocess.call(command, shell=True)
-            Logger.info("Files merged in vox conversion.")
-            #each time, old .wav files are removed, leaving one vox file
+    #removes ogg file
+    os.remove(filename)
+
+	return wavName
+
+def convertToVox(filename, voxName):
+	command = [r"copyfiles\vcecopy", filename, voxName]
+	subprocess.call(command, shell=True)
+
+    #removes wav file
+    os.remove(filename)
+
+#method to convert wav file to vox
+def fullConvert(stringList):
+	#with only one element in the list, conversion is simple
+	#extract filename, end with vox, convert
+	if len(stringList) == 1:
+		#takes first and only element from the list
+		for string in stringList:
+			filepath = string[0]
+			filename = string[1]
+			#voxName is the new file for conversion, removes '.wav'
+        	#and replaces it with '.vox', so the file will still have the user's
+        	#desired name choice
+			fullPath = filepath + '\\' + filename + '.ogg'
+			wavPath = convertToWav(fullPath)
+			voxPath = fullPath[:-4] + '.vox'
+			convertToVox(wavPath, voxPath)
+
+	else:
+
+		for string in stringList:
+			filepath = string[0]
+			filename = string[1]
+			filename = filename[:-1]
+
+			fullPath = filepath + '\\' + filename + '.ogg'
+			wavPath = convertToWav(fullPath)
+			voxPath = fullPath[:-4] + '.vox'
+			convertToVox(wavPath, voxPath)
+
+			#the old .wav file is removed, leaving only the vox file
             #os.remove(string)
 
 def main():
@@ -234,6 +238,7 @@ def main():
                 Logger.info("Stream successful.")
             else:
                 #audio format input
+                #returns a short dictionary
                 audioFormat = requestFormat(Logger)
                 #filename and location input
                 filename = requestFilename(Logger)
@@ -245,7 +250,7 @@ def main():
                 #writes files
                 fileList = watson.writeFiles(userInput, filename, location)
                 if audioFormat['voxBool']:
-                    convertToVox(fileList, Logger)
+                    fullConvert(fileList, Logger)
                     Logger.info("Vox filed created.")
                 Logger.info("Request ID: 375832948 (placeholder)")
 

@@ -135,6 +135,18 @@ def fullConvert(stringList):
 			voxPath = fullPath[:-4] + '.vox'
 			convertToVox(wavPath, voxPath)
 
+	else:
+
+		for string in stringList:
+			filepath = string[0]
+			filename = string[1]
+			filename = filename[:-1]
+
+			fullPath = filepath + '\\' + filename + '.ogg'
+			wavPath = convertToWav(fullPath)
+			voxPath = fullPath[:-4] + '.vox'
+			convertToVox(wavPath, voxPath)
+
 			#the old .wav file is removed, leaving only the vox file
             #os.remove(string)
 
