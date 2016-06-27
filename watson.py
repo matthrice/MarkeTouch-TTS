@@ -44,7 +44,8 @@ class Watson:
 			for chunk in r.iter_content(self.chunk):
 				fd.write(chunk)
 
-		return (path, filename)
+		listElement = [path, filename]
+		return listElement
 
 	#reads in input and determines if more than one file is needed to download
 	#REQUIRES: Text is in format of *LANGUAGE text

@@ -14,7 +14,7 @@ def download(text, filename, path):
 		#verify=False ignores SSL certification
 		r = requests.get(URL + "/v1/synthesize",
                            auth=(USERNAME, PASSWORD),
-                           params={'text': text, 'voice': 'en-US_AllisonVoice', 'accept': 'audio/I16;rate=8000'},
+                           params={'text': text, 'voice': 'en-US_AllisonVoice', 'accept': 'audio/ogg;codecs=opus'},
                            verify=False
                            )
 		#ensures path and directory exist
@@ -24,7 +24,7 @@ def download(text, filename, path):
 		#opens filename from stream and saves it into filename
 		#'wb' indicates file is opened for writing in binary mode
 		#joins path and filename
-		with open(os.path.join(path, filename + '.vce'), 'wb') as fd:
+		with open(os.path.join(path, filename + '.ogg'), 'wb') as fd:
 			for chunk in r.iter_content(CHUNK_SIZE):
 				fd.write(chunk)
 
@@ -107,55 +107,41 @@ def getParams(filename):
 
 	wavfile.close()
 
-#method to convert wav file to vox
-def convertToVox(stringList):
-    #with only one element in the list, conversion is simple
-    #extract filename, end with vox, convert
-    if len(stringList) == 1:
-        #takes first and only element from the list
-        for string in stringList:
-            filepath = string[0]
-            filename = string[1]
-            #voxName is the new file for conversion, removes '.wav'
-            #and replaces it with '.vox', so the file will still have the user's
-            #desired name choice
-            voxName = filename + '.vox'
-            print(voxName)
-            fullPath = filepath + '\\' + filename + '.vce'
-            setWAV(fullPath)
-            voxPath = r"%s\%s" % (filepath, voxName)
-            command = [r"copyfiles\vcecopy.exe", fullPath,'-e', '16', voxPath]
-            #uses subprocess module to call a line for the command line
-            #command line executes a script which should appear along the lines:
-            # $ vcecopy.exe example.wav example.vox
-            subprocess.call(command, shell=True)
-            #vcecopy is an executable which does the actual conversion
+def convertToWav(filename):
+	wavName = filename[:-4] + '.wav'
+	command = ["ffmpeg", "-i", filename, wavName]
+	subprocess.call(command, shell=True)
 
-            #the old .wav file is removed, leaving only the vox file
-            #os.remove(string)
-    #if there are multiple files (language change) the conversion is different
-    else:
-        #cycles through files (each with a number on the end)
-        for string in stringList:
-            filepath = string[0]
-            filename = string[1]
-            #removes the number from the end of the files and '.wav'
-            #adds '.vox' this time, because more characters are removed
-            voxName = filename + '.vox'
-            fullPath = filepath + '\\' + filename + '.vce'
-            setWAV(fullPath)
-            voxPath = r"%s\%s" % (filepath, voxName)
-            command = r"copyfiles\vcecopy.exe " + fullPath + " " + voxPath + '-e16'
-            #from here the process is the same
-            #vcecopy will append each file to the same voxName file
-            #thus it will merge all wav files to one vox file
-            subprocess.call(command, shell=True)
-            #each time, old .wav files are removed, leaving one vox file
+	return wavName
+
+def convertToVox(filename, voxName):
+	command = [r"copyfiles\vcecopy", filename, voxName]
+	subprocess.call(command, shell=True)
+
+#method to convert wav file to vox
+def fullConvert(stringList):
+	#with only one element in the list, conversion is simple
+	#extract filename, end with vox, convert
+	if len(stringList) == 1:
+		#takes first and only element from the list
+		for string in stringList:
+			filepath = string[0]
+			filename = string[1]
+			#voxName is the new file for conversion, removes '.wav'
+        	#and replaces it with '.vox', so the file will still have the user's
+        	#desired name choice
+			fullPath = filepath + '\\' + filename + '.ogg'
+			wavPath = convertToWav(fullPath)
+			voxPath = fullPath[:-4] + '.vox'
+			convertToVox(wavPath, voxPath)
+
+			#the old .wav file is removed, leaving only the vox file
             #os.remove(string)
 
 '''full test of executer'''
-strList = writeFiles("*English hi how are you", "test5", "wavfiles") #writes a temporary wave file to convert
-convertToVox(strList)
+strList = writeFiles("*English hi how are you", "middletest", "wavfiles") #writes a temporary wave file to convert
+fullConvert(strList)
+
 
 '''simple test of watson-produced wave'''
 #subprocess.call(r"copyfiles\vcecopy.exe wavfiles\hello.wav wavfiles\hello.vox")
