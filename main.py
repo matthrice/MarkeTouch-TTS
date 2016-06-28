@@ -152,24 +152,35 @@ def requestPath(Logger):
 
     return location
 
+#method to initially convert ogg file to wav
 def convertToWav(filename):
+    #strips ogg extension and attaches .wav
     wavName = filename[:-4] + '.wav'
+    #creates command line for ffmpeg
     command = ["ffmpeg", "-i", filename, wavName]
+    #ffmpeg is a service for command line conversion
+    #used specifically because it ignores bad header information (Watson wav files)
+    #called through subprocess to return converted file
     subprocess.call(command, shell=True)
 
     #removes ogg file
     os.remove(filename)
 
+    #returns string name reference to the wavfile
     return wavName
 
+#method to convert a wav file to a vox file, provided full path
 def convertToVox(filename, voxName):
+    #creates command for vcecopy, another command line executable
+    #vcecopy handles wav -> vox conversion
     command = [r"copyfiles\vcecopy", filename, voxName]
     subprocess.call(command, shell=True)
 
     #removes wav file
     os.remove(filename)
 
-#method to convert wav file to vox
+#method to convert ogg file to vox
+#ties together methods above to create a single command conversion
 def fullConvert(stringList):
     #with only one element in the list, conversion is simple
     #extract filename, end with vox, convert
@@ -178,31 +189,38 @@ def fullConvert(stringList):
         for string in stringList:
             filepath = string[0]
             filename = string[1]
+            fullPath = filepath + '\\' + filename + '.ogg'
+            #wavPath is the filepath to the newly converted file, ogg->wav
+            wavPath = convertToWav(fullPath)
             #voxName is the new file for conversion, removes '.wav'
             #and replaces it with '.vox', so the file will still have the user's
             #desired name choice
-            fullPath = filepath + '\\' + filename + '.ogg'
-            wavPath = convertToWav(fullPath)
             voxPath = fullPath[:-4] + '.vox'
+
+            #end conversion of wav->vox
             convertToVox(wavPath, voxPath)
 
+    #else clause for the event of merging multiple files
     else:
 
         for string in stringList:
             filepath = string[0]
             filename = string[1]
-            filename = filename[:-1]
 
             fullPath = filepath + '\\' + filename + '.ogg'
             wavPath = convertToWav(fullPath)
-            voxPath = fullPath[:-4] + '.vox'
+
+            #removes the .ogg extension as well as the numeric identifier
+            #that organizes the ogg/wav files.
+            #each file will be subsequently converted to the same vox name
+            #merging the files in the process
+            voxPath = fullPath[:-5] + '.vox'
             convertToVox(wavPath, voxPath)
 
-            #the old .wav file is removed, leaving only the vox file
-            #os.remove(string)
 
 def main():
 
+    #creates the log session
     Logger = createRotatingLog("TTS.log")
     Logger.info("* File session started *")
 
@@ -222,7 +240,7 @@ def main():
         #phrase input
         userInput = requestPhrase(Logger)
         #breaks loop
-        if userInput != 'quit':w
+        if userInput != 'quit':
             #voiceID input (bool conversion to string)
             voiceID = requestVoiceID(Logger)
 
@@ -250,7 +268,7 @@ def main():
                 #writes files
                 fileList = watson.writeFiles(userInput, filename, location)
                 if audioFormat['voxBool']:
-                    fullConvert(fileList, Logger)
+                    fullConvert(fileList)
                     Logger.info("Vox filed created.")
                 Logger.info("Request ID: 375832948 (placeholder)")
 

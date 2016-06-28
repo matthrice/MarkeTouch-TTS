@@ -24,7 +24,6 @@ class Watson:
 	#REQUIRES: text is valid for conversion, filename ends in .wav
 	#EFFECTS: places a .wav file in the project folder
 	def download(self, text, filename, path):
-
 		#requests gets response using parameters for authorization and audio format
 		#stream=True allows it to be streamed as well
 		#verify=False ignores SSL certification
@@ -44,7 +43,7 @@ class Watson:
 			for chunk in r.iter_content(self.chunk):
 				fd.write(chunk)
 
-		listElement = [path, filename]
+		listElement = [path, filename[:-4]]
 		return listElement
 
 	#reads in input and determines if more than one file is needed to download
@@ -63,7 +62,7 @@ class Watson:
 		extension = ""
 		if self.accept == "audio/wav":
 			extension = ".wav"
-		elif self.accept == "audio/ogg;codecs=opus":
+		else:
 			extension = ".ogg"
 
 		#empty list for storing filenames
