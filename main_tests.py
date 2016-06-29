@@ -35,7 +35,7 @@ class MainTestCase(unittest.TestCase):
 
 	#tests the request module
 	#part of the download() and stream() functions
-	'''
+
 	def test_download_request(self):
 
 		requests.packages.urllib3.disable_warnings()
@@ -79,7 +79,7 @@ class MainTestCase(unittest.TestCase):
 		for f in filelist:
 			os.remove(f)
 
-		'''
+
 
 	def test_valid_filename(self):
 
@@ -119,7 +119,6 @@ class MainTestCase(unittest.TestCase):
 		self.assertEqual(format1, "audio/wav")
 		self.assertEqual(format2, "audio/ogg;codecs=opus")
 		self.assertEqual(format3, "audio/ogg;codecs=opus")
-
 
 
 
