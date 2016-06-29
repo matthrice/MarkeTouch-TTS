@@ -125,7 +125,7 @@ def requestFormat(Logger):
         Logger.info("File type: .ogg")
         voxBool = False
     elif fInt == 3:
-        accept = "audio/ogg"
+        accept = "audio/ogg;codecs=opus"
         Logger.info("File type: .ogg")
         voxBool = True
 

@@ -116,14 +116,9 @@ class MainTestCase(unittest.TestCase):
 		print("enter 3: ")
 		format3 = main.requestFormat(Logger)
 
-		self.assertEqual(format1, "audio/wav")
-		self.assertEqual(format2, "audio/ogg;codecs=opus")
-		self.assertEqual(format3, "audio/ogg;codecs=opus")
-
-
-
-
-
+		self.assertEqual(format1['accept'], "audio/wav")
+		self.assertEqual(format2['accept'], "audio/ogg;codecs=opus")
+		self.assertEqual(format3['accept'], "audio/ogg;codecs=opus")
 
 
 
