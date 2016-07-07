@@ -20,12 +20,9 @@
 
 
 import logging
-import time
 from logging.handlers import RotatingFileHandler
 from watson import Watson
 import requests
-import pyaudio
-import wave
 import os
 import datetime
 import subprocess
@@ -38,10 +35,17 @@ URL = 'https://stream.watsonplatform.net/text-to-speech/api'
 PASSWORD = 'QiVBWYF2uBlJ'
 USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
 CHUNK_SIZE = 1024
+
 #Information for logger
 MEGABYTE = 1000000 #number of bytes in a megabyte
 now = datetime.datetime.now()   #current time
 
+#parameters for database connection
+DB_DRIVER = "{SQL Server}"
+DB_HOST = "vbserv.archtelecom.com"
+DB_NAME = "bcastdb"
+DB_USER = "inetlog"
+DB_PASSWORD = "evita"
 
 #method for making a rotating log
 #REQUIRES: Path is valid
@@ -64,7 +68,6 @@ def createRotatingLog(path):
     Logger.addHandler(sizeHandler)
 
     return Logger
-
 
 #Bool method to assert whether the string is intended to return
 #True or False

@@ -1,3 +1,5 @@
+import pypyodbc
+import json
 import logging
 from logging.handlers import RotatingFileHandler
 from watson import Watson
@@ -65,20 +67,18 @@ def validFilename(string):
     return True
 
 #method to request a text phrase to synthesize voice
-def requestPhrase(Logger):
-    userInput = input("Enter a phrase: ")
+def getPhrase(Logger, phrase):
     #checks for empty input
-    if userInput == '':
+    if phrase == '':
         Logger.warning("No text input")
 
-    if len(userInput) < 2:
+    if len(phrase) < 2:
         Logger.warning("Not enough text to synthesize")
 
-    return userInput
+    return phrase
 
 #method to request a voiceID yes or no answer
-def requestVoiceID(Logger):
-    voiceIDBool = input("Enter 1 to hear male voice, 0 to hear female voice: ")
+def getVoiceID(Logger, voiceIDBool):
     if not validBool(voiceIDBool):
         Logger.warning("Invalid input for VoiceID: %s" % voiceIDBool)
 
@@ -91,9 +91,8 @@ def requestVoiceID(Logger):
 
 #method to check if user wants to stream or download
 #returns true or false
-def isStream(Logger):
+def isStream(Logger, streamBool):
     #stream input (determines whether code runs stream() or download())
-    streamBool = input("Enter 1 to stream, enter 0 to download: ")
     if not validBool(streamBool):
         Logger.warning("Invalid input for streamBool: %s" % streamBool)
 
@@ -106,8 +105,7 @@ def isStream(Logger):
 #method to receive format of audio from user
 #also recieves if the file is to be converted into vox
 #returns a dictionary, in the format of (accept, voxBool)
-def requestFormat(Logger):
-    formatBool = input("Enter 1 for .wav, enter 2 for .ogg, enter 3 for .vox: ")
+def getFormat(Logger, formatBool):
     fInt = int(formatBool)
     if fInt != 1 or fInt != 2 or fInt != 3:
         Logger.warning("Invalid input for formatBool: %s" % formatBool)
@@ -129,9 +127,8 @@ def requestFormat(Logger):
     return {'accept':accept, 'voxBool':voxBool}
 
 #method to receive filename from user
-def requestFilename(Logger):
+def getFilename(Logger, filename):
     #filename and location input
-    filename = input("Enter a name for the file: ")
     if not validFilename(filename):
         Logger.warning("Invalid input for filename: %s" % filename)
 
@@ -141,8 +138,7 @@ def requestFilename(Logger):
     return filename
 
 #method to receive filepath from user
-def requestPath(Logger):
-    location = input("Enter a location for the file: ")
+def getPath(Logger, location):
     #asserts that the path exists
     if not os.path.isdir(location):
         Logger.warning("Directory in path does not exist: %s" % location)
@@ -216,12 +212,59 @@ def fullConvert(stringList):
             convertToVox(wavPath, voxPath)
 
 
-def main():
 
-    #creates the log session
-    Logger = createRotatingLog("TTS.log")
-    Logger.info("* File session started *")
+def getTranscriptData():
 
+    dbDriver = "{SQL Server}"
+    dbHost = "vbserv.archtelecom.com"
+    dbName = "bcastdb"
+    dbUser = "inetlog"
+    dbPassword = "evita"
+
+    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" % (dbDriver, dbHost, dbUser, dbPassword, dbName)
+    conn = pypyodbc.connect(connect_string1)
+
+    crsr = conn.cursor()
+    crsr.execute("GetTextToSpeechStaging")
+
+    dbList = (crsr.fetchmany(1))[0]
+
+
+    jsonItem = json.loads(dbList[4])
+    fileType = (jsonItem["fileType"])
+    voiceID = (jsonItem["voiceID"])
+
+    dict = {'identity': dbList[0], 'voiceTranscript': dbList[1], 'number': dbList[2],
+            'filePath': dbList[3], 'fileType': fileType, 'voiceID': voiceID}
+
+    conn.close()
+
+
+    return dict
+
+def createArguments(dict):
+    transcript = "*English " + dict["voiceTranscript"]
+    filepath = dict["filePath"]
+
+    if dict["fileType"] == "wav":
+        audioFormat = 1
+    elif dict["fileType"] == "ogg":
+        audioFormat = 2
+    elif dict["fileType"] == "vox":
+        audioFormat = 3
+
+    if dict["voiceID"] == "en-US_AllisonVoice":
+        voiceID = 0
+    elif dict["voiceID"] == "en-US_MichaelVoice":
+        voiceID = 1
+
+    return transcript, filepath, audioFormat, voiceID
+
+
+def tempConverter(text, voice, downloadBool, audiofmt, fileN, fileP):
+    # simple logger to act as parameter for the functions
+    logging.basicConfig(filename='maintest.log', level=30)
+    Logger = logging.getLogger("main_test_log")
 
     #disable warnings for requests library
     requests.packages.urllib3.disable_warnings()
@@ -234,49 +277,51 @@ def main():
     voiceID = ''
 
     #main function, loops until user types quit
-    while userInput != 'quit':
-        #phrase input
-        userInput = requestPhrase(Logger)
-        #breaks loop
-        if userInput != 'quit':
-            #voiceID input (bool conversion to string)
-            voiceID = requestVoiceID(Logger)
+    #phrase input
+    userInput = getPhrase(Logger, text)
+    #breaks loop
+    #voiceID input (bool conversion to string)
+    voiceID = getVoiceID(Logger, voice)
 
-            if isStream(Logger):
-                Logger.info("Output: Stream.")
-                #creates watson object, wav is default for stream
-                watson = Watson(USERNAME, PASSWORD, voiceID,
-                                URL, CHUNK_SIZE, 'audio/wav')
-                watson.playFiles(userInput)
+    if isStream(Logger, downloadBool):
+        Logger.info("Output: Stream.")
+        #creates watson object, wav is default for stream
+        watson = Watson(USERNAME, PASSWORD, voiceID,
+                        URL, CHUNK_SIZE, 'audio/wav')
+        watson.playFiles(userInput)
 
-                #Request ID placeholder
-                Logger.info("Request ID: 375832948 (placeholder)")
-                Logger.info("Stream successful.")
-            else:
-                #audio format input
-                #returns a short dictionary
-                audioFormat = requestFormat(Logger)
-                #filename and location input
-                filename = requestFilename(Logger)
-                location = requestPath(Logger)
+        #Request ID placeholder
+        Logger.info("Request ID: 375832948 (placeholder)")
+        Logger.info("Stream successful.")
+    else:
+        #audio format input
+        #returns a short dictionary
+        audioFormat = getFormat(Logger, audiofmt)
+        print(audioFormat)
+        #filename and location input
+        filename = getFilename(Logger, fileN)
+        location = getPath(Logger, fileP)
 
-                #creates watson object
-                watson = Watson(USERNAME, PASSWORD, voiceID,
-                                URL, CHUNK_SIZE, audioFormat['accept'])
-                #writes files
-                fileList = watson.writeFiles(userInput, filename, location)
-                if audioFormat['voxBool']:
-                    fullConvert(fileList)
-                    Logger.info("Vox filed created.")
-                Logger.info("Request ID: 375832948 (placeholder)")
+        #creates watson object
+        watson = Watson(USERNAME, PASSWORD, voiceID,
+                        URL, CHUNK_SIZE, audioFormat['accept'])
+        #writes files
+        print(voiceID, downloadBool, audioFormat, filename, location)
+        fileList = watson.writeFiles(userInput, filename, location)
+        if audioFormat['voxBool']:
+            fullConvert(fileList)
+            Logger.info("Vox filed created.")
+        Logger.info("Request ID: 375832948 (placeholder)")
 
-                print("Audio file saved.")
+        print("Audio file saved.")
 
-                Logger.info("Download successful.")
+        Logger.info("Download successful.")
 
     #Indicates end of logging session, adds space between sessions
     Logger.info("* File session ended *\n\n")
 
-#runs main function
-if __name__ == "__main__":
-    main()
+
+firstSet = getTranscriptData()
+transcript, filepath, audioFormat, voiceID = createArguments(firstSet)
+
+tempConverter(transcript, voiceID, 0, audioFormat, "hereitgoes", "wavfiles")
