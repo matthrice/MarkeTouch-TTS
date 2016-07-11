@@ -67,59 +67,34 @@ def validFilename(string):
     return True
 
 #method to request a text phrase to synthesize voice
-def getPhrase(Logger, phrase):
+def checkPhrase(Logger, phrase):
     #checks for empty input
     if phrase == '':
         Logger.warning("No text input")
+        return False
 
     if len(phrase) < 2:
         Logger.warning("Not enough text to synthesize")
-
-    return phrase
-
-#method to request a voiceID yes or no answer
-def getVoiceID(Logger, voiceIDBool):
-    if not validBool(voiceIDBool):
-        Logger.warning("Invalid input for VoiceID: %s" % voiceIDBool)
-
-    if yesOrNo(voiceIDBool):
-        voiceID = 'en-US_MichaelVoice'
-    else:
-        voiceID = 'en-US_AllisonVoice'
-
-    return voiceID
-
-#method to check if user wants to stream or download
-#returns true or false
-def isStream(Logger, streamBool):
-    #stream input (determines whether code runs stream() or download())
-    if not validBool(streamBool):
-        Logger.warning("Invalid input for streamBool: %s" % streamBool)
-
-    if yesOrNo(streamBool):
-
-        return True
-    else:
         return False
+
+    return True
+
 
 #method to receive format of audio from user
 #also recieves if the file is to be converted into vox
 #returns a dictionary, in the format of (accept, voxBool)
-def getFormat(Logger, formatBool):
-    fInt = int(formatBool)
-    if fInt != 1 or fInt != 2 or fInt != 3:
-        Logger.warning("Invalid input for formatBool: %s" % formatBool)
-
+def getFormat(Logger, formatType):
+    assert(formatType != 'ogg' or formatType != 'wav' or formatType != 'vox')
     #adjusts the accept variable based on response
-    if fInt == 1:
+    if formatType = 'wav':
         accept = "audio/wav"
         Logger.info("File type: .wav")
         voxBool = False
-    elif fInt == 2:
+    elif formatType = 'ogg':
         accept = "audio/ogg;codecs=opus"
         Logger.info("File type: .ogg")
         voxBool = False
-    elif fInt == 3:
+    elif formatType = 'vox':
         accept = "audio/wav"
         Logger.info("File type: .vox")
         voxBool = True
@@ -127,23 +102,25 @@ def getFormat(Logger, formatBool):
     return {'accept':accept, 'voxBool':voxBool}
 
 #method to receive filename from user
-def getFilename(Logger, filename):
+def checkFilename(Logger, filename):
     #filename and location input
     if not validFilename(filename):
         Logger.warning("Invalid input for filename: %s" % filename)
+        return False
 
     #logs filename
     Logger.info("Filename: %s" % filename)
 
-    return filename
+    return True
 
 #method to receive filepath from user
-def getPath(Logger, location):
+def checkPath(Logger, location):
     #asserts that the path exists
     if not os.path.isdir(location):
         Logger.warning("Directory in path does not exist: %s" % location)
+        return False
 
-    return location
+    return True
 
 #method to initially convert ogg file to wav
 def convertToWav(filename):
@@ -226,42 +203,28 @@ def getTranscriptData():
 
     crsr = conn.cursor()
     crsr.execute("GetTextToSpeechStaging")
+    dbList = (crsr.fetchall())
 
-    dbList = (crsr.fetchmany(1))[0]
-
-
-    jsonItem = json.loads(dbList[4])
-    fileType = (jsonItem["fileType"])
-    voiceID = (jsonItem["voiceID"])
-
-    dict = {'identity': dbList[0], 'voiceTranscript': dbList[1], 'number': dbList[2],
-            'filePath': dbList[3], 'fileType': fileType, 'voiceID': voiceID}
+    #list looks like this currently:
+    #identity, transcript, filename, filepath, json object (filetype and voiceID),
 
     conn.close()
 
 
-    return dict
+    return dbList
 
-def createArguments(dict):
-    transcript = "*English " + dict["voiceTranscript"]
-    filepath = dict["filePath"]
+def editTranscriptData(dbList_1):
 
-    if dict["fileType"] == "wav":
-        audioFormat = 1
-    elif dict["fileType"] == "ogg":
-        audioFormat = 2
-    elif dict["fileType"] == "vox":
-        audioFormat = 3
+    jsonItem = json.loads(dbList_1[4])
+    fileType = (jsonItem["fileType"])
+    voiceID = (jsonItem["voiceID"])
 
-    if dict["voiceID"] == "en-US_AllisonVoice":
-        voiceID = 0
-    elif dict["voiceID"] == "en-US_MichaelVoice":
-        voiceID = 1
+    dict1 = {'identity': dbList_1[0], 'voiceTranscript': dbList_1[1], 'filename': dbList_1[2],
+            'filepath': dbList_1[3], 'fileType': fileType, 'voiceID': voiceID}
 
-    return transcript, filepath, audioFormat, voiceID
+    return dict1
 
-
-def tempConverter(text, voice, downloadBool, audiofmt, fileN, fileP):
+def audioConvert(text, filename, filepath, fileType, voiceID):
     # simple logger to act as parameter for the functions
     logging.basicConfig(filename='maintest.log', level=30)
     Logger = logging.getLogger("main_test_log")
@@ -269,59 +232,37 @@ def tempConverter(text, voice, downloadBool, audiofmt, fileN, fileP):
     #disable warnings for requests library
     requests.packages.urllib3.disable_warnings()
 
-    #empty variables to be used as parameters for download()
-    userInput = ''
-    filename = ''
-    location = ''
-    accept = 'audio/wav'
-    voiceID = ''
+    #checks valid text
+    assert(checkPhrase(Logger, text))
 
-    #main function, loops until user types quit
-    #phrase input
-    userInput = getPhrase(Logger, text)
-    #breaks loop
-    #voiceID input (bool conversion to string)
-    voiceID = getVoiceID(Logger, voice)
+    #audio format input
+    #returns a short dictionary
+    audioFormat = getFormat(Logger, audiofmt)
 
-    if isStream(Logger, downloadBool):
-        Logger.info("Output: Stream.")
-        #creates watson object, wav is default for stream
-        watson = Watson(USERNAME, PASSWORD, voiceID,
-                        URL, CHUNK_SIZE, 'audio/wav')
-        watson.playFiles(userInput)
+    #filename and location input
+    assert(checkFilename(Logger, filename)
+    assert(checkPath(Logger, filepath)
 
-        #Request ID placeholder
-        Logger.info("Request ID: 375832948 (placeholder)")
-        Logger.info("Stream successful.")
-    else:
-        #audio format input
-        #returns a short dictionary
-        audioFormat = getFormat(Logger, audiofmt)
-        print(audioFormat)
-        #filename and location input
-        filename = getFilename(Logger, fileN)
-        location = getPath(Logger, fileP)
+    #creates watson object
+    watson = Watson(USERNAME, PASSWORD, voiceID,
+                    URL, CHUNK_SIZE, audioFormat['accept'])
 
-        #creates watson object
-        watson = Watson(USERNAME, PASSWORD, voiceID,
-                        URL, CHUNK_SIZE, audioFormat['accept'])
-        #writes files
-        print(voiceID, downloadBool, audioFormat, filename, location)
-        fileList = watson.writeFiles(userInput, filename, location)
-        if audioFormat['voxBool']:
-            fullConvert(fileList)
-            Logger.info("Vox filed created.")
-        Logger.info("Request ID: 375832948 (placeholder)")
+    fileList = watson.writeFiles(text, filename, filepath)
+    if audioFormat['voxBool']:
+        fullConvert(fileList)
+        Logger.info("Vox filed created.")
+    Logger.info("Request ID: 375832948 (placeholder)")
 
-        print("Audio file saved.")
+    print("Audio file saved.")
 
-        Logger.info("Download successful.")
+    Logger.info("Download successful.")
 
     #Indicates end of logging session, adds space between sessions
     Logger.info("* File session ended *\n\n")
 
 
-firstSet = getTranscriptData()
-transcript, filepath, audioFormat, voiceID = createArguments(firstSet)
-
-tempConverter(transcript, voiceID, 0, audioFormat, "hereitgoes", "wavfiles")
+dataSet = getTranscriptData()
+for data in dataSet:
+    newDict = editTranscriptData(data)
+    audioConvert(newDict["voiceTranscript"], newDict["filename"], newDict["filepath"],
+                 newDict["fileType"], newDict["voiceID"])
