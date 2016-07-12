@@ -20,6 +20,88 @@ class Watson:
 		self.chunk = int(chunk)
 		self.accept = accept
 
+	#function to change self.voice if user wants multiple languages in one message
+	#takes a string and parses the first word of the string. If it matches a
+	#watson supported language identifier, self.voice is changed accordingly
+
+	#If no change, voice is kept in default language
+	def changeVoice(string):
+		defaultLang = self.voice
+
+		#Checks for a language change that is allowed in multiple files
+		#All the available watson languages listed below
+		#if a new language is chosen, self.voice is changed and
+		#the text is split to take out the language identifier
+
+		#Spanish (North American dialect), female
+		if string[:16] == "es-US_SofiaVoice":
+			self.voice = "es-US_SofiaVoice"
+			a, b = string.split(" ", 1)
+
+		#German, female
+		elif string[:17] == "de-DE_BirgitVoice":
+			self.voice = "de-DE_BirgitVoice"
+			a, b = string.split(" ", 1)
+
+		#German, male
+		elif string[:17] == "de-DE_DieterVoice":
+			self.voice = "de-DE_DieterVoice"
+			a, b = string.split(" ", 1)
+
+		#English (British dialect), female
+		elif string[:15] == "en-GB_KateVoice":
+			self.voice = "en-GB_KateVoice"
+			a, b = string.split(" ", 1)
+
+		#English (US dialect), female
+		elif string[:18] == "en-US_AllisonVoice":
+			self.voice = "en-US_AllisonVoice"
+			a, b = string.split(" ", 1)
+
+		#English (US dialect), female
+		elif string[:15] == "en-US_LisaVoice":
+			self.voice = "en-US_LisaVoice"
+			a, b = string.split(" ", 1)
+
+		#Spanish (Castilian dialect), male
+		elif string[:18] == "es-ES_EnriqueVoice":
+			self.voice = "es-ES_EnriqueVoice"
+			a, b = string.split(" ", 1)
+
+		#Spanish (Castilian dialect), female
+		elif string[:16] == "es-ES_LauraVoice":
+			self.voice = "es-ES_LauraVoice"
+			a, b = string.split(" ", 1)
+
+		#French, female
+		elif string[:16] == "fr-FR_ReneeVoice":
+			self.voice = "fr-FR_ReneeVoice"
+			a, b = string.split(" ", 1)
+
+		#Italian, female
+		elif string[:20] == "it-IT_FrancescaVoice":
+			self.voice = "it-IT_FrancescaVoice"
+			a, b = string.split(" ", 1)
+
+		#Japanese, female
+		elif string[:14] == "ja-JP_EmiVoice":
+			self.voice = "ja-JP_EmiVoice"
+			a, b = string.split(" ", 1)
+
+		#Brazilian Portuguese, female
+		elif string[:18] == "pt-BR_IsabelaVoice":
+			self.voice = "pt-BR_IsabelaVoice"
+			a, b = string.split(" ", 1)
+
+		#default voice, for switching back
+		else:
+			self.voice = defaultLang
+			#doesn't split text because there's no language change identifier
+			b = string
+
+		#returns the rest of the string after self.voice is changed
+		return b
+
 	#function to convert text to speech file
 	#REQUIRES: text is valid for conversion, filename ends in .wav
 	#EFFECTS: places a .wav file in the project folder
@@ -81,77 +163,7 @@ class Watson:
 			for string in stringList:
 				count += 1
 
-				#Checks for a language change that is allowed in multiple files
-				#All the available watson languages listed below
-				#if a new language is chosen, self.voice is changed and
-				#the text is split to take out the language identifier
-
-				#Spanish (North American dialect), female
-				if string[:16] == "es-US_SofiaVoice":
-					self.voice = "es-US_SofiaVoice"
-					a, b = string.split(" ", 1)
-
-				#German, female
-				elif string[:17] == "de-DE_BirgitVoice":
-					self.voice = "de-DE_BirgitVoice"
-					a, b = string.split(" ", 1)
-
-				#German, male
-				elif string[:17] == "de-DE_DieterVoice":
-					self.voice = "de-DE_DieterVoice"
-					a, b = string.split(" ", 1)
-
-				#English (British dialect), female
-				elif string[:15] == "en-GB_KateVoice":
-					self.voice = "en-GB_KateVoice"
-					a, b = string.split(" ", 1)
-
-				#English (US dialect), female
-				elif string[:18] == "en-US_AllisonVoice":
-					self.voice = "en-US_AllisonVoice"
-					a, b = string.split(" ", 1)
-
-				#English (US dialect), female
-				elif string[:15] == "en-US_LisaVoice":
-					self.voice = "en-US_LisaVoice"
-					a, b = string.split(" ", 1)
-
-				#Spanish (Castilian dialect), male
-				elif string[:18] == "es-ES_EnriqueVoice":
-					self.voice = "es-ES_EnriqueVoice"
-					a, b = string.split(" ", 1)
-
-				#Spanish (Castilian dialect), female
-				elif string[:16] == "es-ES_LauraVoice":
-					self.voice = "es-ES_LauraVoice"
-					a, b = string.split(" ", 1)
-
-				#French, female
-				elif string[:16] == "fr-FR_ReneeVoice":
-					self.voice = "fr-FR_ReneeVoice"
-					a, b = string.split(" ", 1)
-
-				#Italian, female
-				elif string[:20] == "it-IT_FrancescaVoice":
-					self.voice = "it-IT_FrancescaVoice"
-					a, b = string.split(" ", 1)
-
-				#Japanese, female
-				elif string[:14] == "ja-JP_EmiVoice":
-					self.voice = "ja-JP_EmiVoice"
-					a, b = string.split(" ", 1)
-
-				#Brazilian Portuguese, female
-				elif string[:18] == "pt-BR_IsabelaVoice":
-					self.voice = "pt-BR_IsabelaVoice"
-					a, b = string.split(" ", 1)
-
-				#default voice, for switching back
-				else:
-					self.voice = english
-					#doesn't split text because there's no language change identifier
-					b = string
-
+				b = changeVoice(string)
 				#downloads the file with an extension of its count
 				#appends the files in order in fileList
 				f = self.download(b, filename + str(count) + extension, path)
@@ -209,23 +221,21 @@ class Watson:
 		#creates a counter for the filenames
 		count = 0
 
-		text = text[1:]
+
 		stringList = text.split('*')
 		#iterates through the strings in the list
 		#each should begin with a specification of language
-		for string in stringList:
-			count += 1
-			#splits the string from the language variable
-			a, b = string.split(" ", 1)
-			#streams a spanish file
-			if a == "Spanish":
-				self.voice = "es-US_SofiaVoice"
-				self.stream(b, stream)
-			#streams an english file
-			elif a == "English":
-				self.voice = english
-				self.stream(b, stream)
+		if len(stringList) == 1:
+			self.stream(string, stream)
 
+		elif len(stringList) > 1:
+			for string in stringList:
+				count += 1
+				b = changeVoice(string)
+
+				#downloads the file with an extension of its count
+				#appends the files in order in fileList
+				self.stream(b, stream)
 
 		#stop stream
 		stream.stop_stream()

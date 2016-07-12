@@ -263,9 +263,14 @@ def audioConvert(text, filename, filepath, fileType, voiceID):
     #Indicates end of logging session, adds space between sessions
     Logger.info("* File session ended *\n\n")
 
+def main():
+    dataSet = getTranscriptData()
+    for data in dataSet:
+        newDict = editTranscriptData(data)
+        audioConvert(newDict["voiceTranscript"], newDict["filename"], newDict["filepath"],
+                     newDict["fileType"], newDict["voiceID"])
 
-dataSet = getTranscriptData()
-for data in dataSet:
-    newDict = editTranscriptData(data)
-    audioConvert(newDict["voiceTranscript"], newDict["filename"], newDict["filepath"],
-                 newDict["fileType"], newDict["voiceID"])
+
+#runs main function
+if __name__ == "__main__":
+    main()
