@@ -73,11 +73,11 @@ class Watson:
 		stringList = text.split('*')
 		#iterates through the strings in the list
 		#each should begin with a specification of language
-		if len(stringList == 1):
+		if len(stringList) == 1:
 			f = self.download(stringList[0], filename + extension, path)
 			fileList.append(f)
 
-		elif len(stringList > 1):
+		elif len(stringList) > 1:
 			for string in stringList:
 				count += 1
 
@@ -92,57 +92,57 @@ class Watson:
 					a, b = string.split(" ", 1)
 
 				#German, female
-				elif string[:17] == "de-DE_BirgitVoice"
+				elif string[:17] == "de-DE_BirgitVoice":
 					self.voice = "de-DE_BirgitVoice"
 					a, b = string.split(" ", 1)
 
 				#German, male
-				elif string[:17] == "de-DE_DieterVoice"
+				elif string[:17] == "de-DE_DieterVoice":
 					self.voice = "de-DE_DieterVoice"
 					a, b = string.split(" ", 1)
 
 				#English (British dialect), female
-				elif string[:15] == "en-GB_KateVoice"
+				elif string[:15] == "en-GB_KateVoice":
 					self.voice = "en-GB_KateVoice"
 					a, b = string.split(" ", 1)
 
 				#English (US dialect), female
-				elif string[:18] == "en-US_AllisonVoice"
+				elif string[:18] == "en-US_AllisonVoice":
 					self.voice = "en-US_AllisonVoice"
 					a, b = string.split(" ", 1)
 
 				#English (US dialect), female
-				elif string[:15] == "en-US_LisaVoice"
+				elif string[:15] == "en-US_LisaVoice":
 					self.voice = "en-US_LisaVoice"
 					a, b = string.split(" ", 1)
 
 				#Spanish (Castilian dialect), male
-				elif string[:18] == "es-ES_EnriqueVoice"
+				elif string[:18] == "es-ES_EnriqueVoice":
 					self.voice = "es-ES_EnriqueVoice"
 					a, b = string.split(" ", 1)
 
 				#Spanish (Castilian dialect), female
-				elif string[:16] == "es-ES_LauraVoice"
+				elif string[:16] == "es-ES_LauraVoice":
 					self.voice = "es-ES_LauraVoice"
 					a, b = string.split(" ", 1)
 
 				#French, female
-				elif string[:16] == "fr-FR_ReneeVoice"
+				elif string[:16] == "fr-FR_ReneeVoice":
 					self.voice = "fr-FR_ReneeVoice"
 					a, b = string.split(" ", 1)
 
 				#Italian, female
-				elif string[:20] == "it-IT_FrancescaVoice"
+				elif string[:20] == "it-IT_FrancescaVoice":
 					self.voice = "it-IT_FrancescaVoice"
 					a, b = string.split(" ", 1)
 
 				#Japanese, female
-				elif string[:14] == "ja-JP_EmiVoice"
+				elif string[:14] == "ja-JP_EmiVoice":
 					self.voice = "ja-JP_EmiVoice"
 					a, b = string.split(" ", 1)
 
 				#Brazilian Portuguese, female
-				elif string[:18] == "pt-BR_IsabelaVoice"
+				elif string[:18] == "pt-BR_IsabelaVoice":
 					self.voice = "pt-BR_IsabelaVoice"
 					a, b = string.split(" ", 1)
 

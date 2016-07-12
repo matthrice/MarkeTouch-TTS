@@ -86,15 +86,15 @@ def checkPhrase(Logger, phrase):
 def getFormat(Logger, formatType):
     assert(formatType != 'ogg' or formatType != 'wav' or formatType != 'vox')
     #adjusts the accept variable based on response
-    if formatType = 'wav':
+    if formatType == 'wav':
         accept = "audio/wav"
         Logger.info("File type: .wav")
         voxBool = False
-    elif formatType = 'ogg':
+    elif formatType == 'ogg':
         accept = "audio/ogg;codecs=opus"
         Logger.info("File type: .ogg")
         voxBool = False
-    elif formatType = 'vox':
+    elif formatType == 'vox':
         accept = "audio/wav"
         Logger.info("File type: .vox")
         voxBool = True
@@ -161,6 +161,7 @@ def fullConvert(stringList):
             filepath = string[0]
             filename = string[1]
             fullPath = filepath + '\\' + filename + '.wav'
+            print(fullPath)
             #wavPath is the filepath to the newly converted file, ogg->wav
             wavPath = convertToWav(fullPath)
             #voxName is the new file for conversion, removes '.wav'
@@ -219,6 +220,7 @@ def editTranscriptData(dbList_1):
     fileType = (jsonItem["fileType"])
     voiceID = (jsonItem["voiceID"])
 
+
     dict1 = {'identity': dbList_1[0], 'voiceTranscript': dbList_1[1], 'filename': dbList_1[2],
             'filepath': dbList_1[3], 'fileType': fileType, 'voiceID': voiceID}
 
@@ -237,15 +239,16 @@ def audioConvert(text, filename, filepath, fileType, voiceID):
 
     #audio format input
     #returns a short dictionary
-    audioFormat = getFormat(Logger, audiofmt)
+    audioFormat = getFormat(Logger, fileType)
 
     #filename and location input
-    assert(checkFilename(Logger, filename)
-    assert(checkPath(Logger, filepath)
+    assert(checkFilename(Logger, filename))
+    assert(checkPath(Logger, filepath))
 
     #creates watson object
     watson = Watson(USERNAME, PASSWORD, voiceID,
                     URL, CHUNK_SIZE, audioFormat['accept'])
+
 
     fileList = watson.writeFiles(text, filename, filepath)
     if audioFormat['voxBool']:
