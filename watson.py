@@ -25,7 +25,7 @@ class Watson:
 	#watson supported language identifier, self.voice is changed accordingly
 
 	#If no change, voice is kept in default language
-	def changeVoice(string):
+	def changeVoice(self, string):
 		defaultLang = self.voice
 
 		#Checks for a language change that is allowed in multiple files
@@ -163,7 +163,7 @@ class Watson:
 			for string in stringList:
 				count += 1
 
-				b = changeVoice(string)
+				b = self.changeVoice(string)
 				#downloads the file with an extension of its count
 				#appends the files in order in fileList
 				f = self.download(b, filename + str(count) + extension, path)
@@ -226,12 +226,12 @@ class Watson:
 		#iterates through the strings in the list
 		#each should begin with a specification of language
 		if len(stringList) == 1:
-			self.stream(string, stream)
+			self.stream(stringList[0], stream)
 
 		elif len(stringList) > 1:
 			for string in stringList:
 				count += 1
-				b = changeVoice(string)
+				b = self.changeVoice(string)
 
 				#downloads the file with an extension of its count
 				#appends the files in order in fileList
