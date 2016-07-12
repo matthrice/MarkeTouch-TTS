@@ -70,37 +70,93 @@ class Watson:
 		fileList = []
 
 		#splits the strings into a list, separated by the symbol (*)
-		text = text[1:]
 		stringList = text.split('*')
 		#iterates through the strings in the list
 		#each should begin with a specification of language
-		for string in stringList:
-			count += 1
-			#splits the string from the language variable
-			a, b = string.split(" ", 1)
-			#creates a spanish file
-			if a == "Spanish":
-				self.voice = "es-US_SofiaVoice"
-				#checks if no language change, if so leaves off count
-				if len(stringList) == 1:
-					#downloads file, also appends to fileList
-					f = self.download(b, filename + extension, path)
-					fileList.append(f)
+		if len(stringList == 1):
+			f = self.download(stringList[0], filename + extension, path)
+			fileList.append(f)
+
+		elif len(stringList > 1):
+			for string in stringList:
+				count += 1
+
+				#Checks for a language change that is allowed in multiple files
+				#All the available watson languages listed below
+				#if a new language is chosen, self.voice is changed and
+				#the text is split to take out the language identifier
+
+				#Spanish (North American dialect), female
+				if string[:16] == "es-US_SofiaVoice":
+					self.voice = "es-US_SofiaVoice"
+					a, b = string.split(" ", 1)
+
+				#German, female
+				elif string[:17] == "de-DE_BirgitVoice"
+					self.voice = "de-DE_BirgitVoice"
+					a, b = string.split(" ", 1)
+
+				#German, male
+				elif string[:17] == "de-DE_DieterVoice"
+					self.voice = "de-DE_DieterVoice"
+					a, b = string.split(" ", 1)
+
+				#English (British dialect), female
+				elif string[:15] == "en-GB_KateVoice"
+					self.voice = "en-GB_KateVoice"
+					a, b = string.split(" ", 1)
+
+				#English (US dialect), female
+				elif string[:18] == "en-US_AllisonVoice"
+					self.voice = "en-US_AllisonVoice"
+					a, b = string.split(" ", 1)
+
+				#English (US dialect), female
+				elif string[:15] == "en-US_LisaVoice"
+					self.voice = "en-US_LisaVoice"
+					a, b = string.split(" ", 1)
+
+				#Spanish (Castilian dialect), male
+				elif string[:18] == "es-ES_EnriqueVoice"
+					self.voice = "es-ES_EnriqueVoice"
+					a, b = string.split(" ", 1)
+
+				#Spanish (Castilian dialect), female
+				elif string[:16] == "es-ES_LauraVoice"
+					self.voice = "es-ES_LauraVoice"
+					a, b = string.split(" ", 1)
+
+				#French, female
+				elif string[:16] == "fr-FR_ReneeVoice"
+					self.voice = "fr-FR_ReneeVoice"
+					a, b = string.split(" ", 1)
+
+				#Italian, female
+				elif string[:20] == "it-IT_FrancescaVoice"
+					self.voice = "it-IT_FrancescaVoice"
+					a, b = string.split(" ", 1)
+
+				#Japanese, female
+				elif string[:14] == "ja-JP_EmiVoice"
+					self.voice = "ja-JP_EmiVoice"
+					a, b = string.split(" ", 1)
+
+				#Brazilian Portuguese, female
+				elif string[:18] == "pt-BR_IsabelaVoice"
+					self.voice = "pt-BR_IsabelaVoice"
+					a, b = string.split(" ", 1)
+
+				#default voice, for switching back
 				else:
-					f = self.download(b, filename + str(count)
-									  + extension, path)
-					fileList.append(f)
-			#creates an english file
-			elif a == "English":
-				self.voice = english
-				#checks if no language change, if so leaves off count
-				if len(stringList) == 1:
-					f = self.download(b, filename + extension, path)
-					fileList.append(f)
-				else:
-					f = self.download(b, filename + str(count)
-					                  + extension, path)
-					fileList.append(f)
+					self.voice = english
+					#doesn't split text because there's no language change identifier
+					b = string
+
+				#downloads the file with an extension of its count
+				#appends the files in order in fileList
+				f = self.download(b, filename + str(count) + extension, path)
+				fileList.append(f)
+
 
 		#returns a list of all files written
 		#returns them as a list of 2 element lists
