@@ -10,6 +10,8 @@ class Watson:
 	SAMPWIDTH = 2
 	NCHANNELS = 1
 
+	#list of available
+
 	#initializes parameters for authorization and conversion
 	def __init__(self, username, password, voice,
 				 url, chunk, accept):
@@ -20,10 +22,10 @@ class Watson:
 		self.chunk = int(chunk)
 		self.accept = accept
 
+
 	#function to change self.voice if user wants multiple languages in one message
 	#takes a string and parses the first word of the string. If it matches a
 	#watson supported language identifier, self.voice is changed accordingly
-
 	#If no change, voice is kept in default language
 	def changeVoice(self, string):
 		defaultLang = self.voice
@@ -111,7 +113,8 @@ class Watson:
 		#verify=False ignores SSL certification
 		r = requests.get(self.url + "/v1/synthesize",
                            auth=(self.username, self.password),
-                           params={'text': text, 'voice': self.voice, 'accept': self.accept},
+                           params={'text': text, 'voice': self.voice,
+						           'accept': self.accept},
                            verify=False
                            )
 		#ensures path and directory exist
@@ -125,6 +128,7 @@ class Watson:
 			for chunk in r.iter_content(self.chunk):
 				fd.write(chunk)
 
+		#extension lenght of file = 4 (". w a v")
 		listElement = [path, filename[:-4]]
 		return listElement
 
@@ -185,7 +189,8 @@ class Watson:
 		#stream is set to true so the data will not be downloaded at once
 		r = requests.get(self.url + "/v1/synthesize",
                            auth=(self.username, self.password),
-                           params={'text': text, 'voice': self.voice, 'accept': self.accept},
+                           params={'text': text, 'voice': self.voice,
+						           'accept': self.accept},
                            stream=True, verify=False,
                            )
 

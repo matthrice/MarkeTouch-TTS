@@ -1,27 +1,43 @@
-import pypyodbc
-import json
-import logging
-from logging.handlers import RotatingFileHandler
-from watson import Watson
-import requests
 import os
 import datetime
 import subprocess
+import logging
+
+import requests
+import json
+import pypyodbc
+
+from logging.handlers import RotatingFileHandler
+from watson import Watson
+
+#GLOBALS#
 
 #parameters for authorization and audio format
 URL = 'https://stream.watsonplatform.net/text-to-speech/api'
 PASSWORD = 'QiVBWYF2uBlJ'
 USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
 CHUNK_SIZE = 1024
+WAV_FORM = "audio/wav"
+OGG_FORM = "audio/ogg;codecs=opus"
+
 #Information for logger
 MEGABYTE = 1000000 #number of bytes in a megabyte
-now = datetime.datetime.now()   #current time
+NOW = datetime.datetime.NOW()   #current time
+LOG_FILE = "maintest.log"
+LOG_OBJECT = "main_test_log"
+
+#Server Information
+DB_DRIVER = "{SQL Server}"
+DB_HOST = "vbserv.archtelecom.com"
+DB_NAME = "bcastdb"
+DB_USER = "inetlog"
+DB_PASSWORD = "evita"
 
 
 #method for making a rotating log
-#REQUIRES: Path is valid
-#MODIFIES: Log based on byte size and period of time
-#EFFECTS: Creates multiple logs, as well as deleting them after 30 days
+#requires path is valid
+#modifies log based on byte size and period of time
+#creates multiple logs, as well as deleting them after 30 days
 def createRotatingLog(path):
     #initiates logging session
     Logger = logging.getLogger("TTS")
@@ -87,15 +103,15 @@ def getFormat(Logger, formatType):
     assert(formatType != 'ogg' or formatType != 'wav' or formatType != 'vox')
     #adjusts the accept variable based on response
     if formatType == 'wav':
-        accept = "audio/wav"
+        accept = WAV_FORM
         Logger.info("File type: .wav")
         voxBool = False
     elif formatType == 'ogg':
-        accept = "audio/ogg;codecs=opus"
+        accept = OGG_FORM
         Logger.info("File type: .ogg")
         voxBool = False
     elif formatType == 'vox':
-        accept = "audio/wav"
+        accept = WAV_FORM
         Logger.info("File type: .vox")
         voxBool = True
 
@@ -129,7 +145,7 @@ def convertToWav(filename):
     #creates command line for ffmpeg
     command = ["ffmpeg", "-i", filename, wavName]
     #ffmpeg is a service for command line conversion
-    #used specifically because it ignores bad header information (Watson wav files)
+    #used specifically because it ignores bad header information (Watson .wav)
     #called through subprocess to return converted file
     subprocess.call(command, shell=True)
 
@@ -190,20 +206,28 @@ def fullConvert(stringList):
             convertToVox(wavPath, voxPath)
 
 
-
+#method for getting transcript data from the SERVER
+#Server parameters and certification defined globally
+#returns a list of lists, with the inner lists containing all the info for the
+#specific text to speech staging
 def getTranscriptData():
 
-    dbDriver = "{SQL Server}"
-    dbHost = "vbserv.archtelecom.com"
-    dbName = "bcastdb"
-    dbUser = "inetlog"
-    dbPassword = "evita"
+    #string to connect to the server
+    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" %
+                      (DB_DRIVER, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
 
-    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" % (dbDriver, dbHost, dbUser, dbPassword, dbName)
+    #creating a connection object through the pypyodbc module
+    #object that defines server relationship
     conn = pypyodbc.connect(connect_string1)
 
+    #cursor object for making changes or calling stored procedures
     crsr = conn.cursor()
+    #calling a stored procedure
+    #"GetTextToSpeechStaging" is a function that retrieves all the information
+    #for a transcript, shown below
     crsr.execute("GetTextToSpeechStaging")
+    #fetchall() retrieves all data in one execution
+    #thus limiting the amount of times the stored procedure must be called to once
     dbList = (crsr.fetchall())
 
     #list looks like this currently:
@@ -211,25 +235,34 @@ def getTranscriptData():
 
     conn.close()
 
-
+    #returns database list
     return dbList
 
+#method to edit the data from the database to make it more usable
+#takes a single list from the list of lists and reformats it into a dictionary
+#does not take the full list of list from the server, this function must be used
+#in a for loop if fetchall() is called
 def editTranscriptData(dbList_1):
 
+    #extracting json data using json module
+    #loads the information into a dictionary, to be put into two variables
     jsonItem = json.loads(dbList_1[4])
     fileType = (jsonItem["fileType"])
     voiceID = (jsonItem["voiceID"])
 
-
-    dict1 = {'identity': dbList_1[0], 'voiceTranscript': dbList_1[1], 'filename': dbList_1[2],
-            'filepath': dbList_1[3], 'fileType': fileType, 'voiceID': voiceID}
+    #creates a six part dictionary defining each necessity of the TTS staging
+    dict1 = {'identity': dbList_1[0], 'voiceTranscript': dbList_1[1],
+             'filename': dbList_1[2], 'filepath': dbList_1[3],
+             'fileType': fileType, 'voiceID': voiceID}
 
     return dict1
 
-def audioConvert(text, filename, filepath, fileType, voiceID):
-    # simple logger to act as parameter for the functions
-    logging.basicConfig(filename='maintest.log', level=30)
-    Logger = logging.getLogger("main_test_log")
+
+
+def audioConvert(requestID, text, filename, filepath, fileType, voiceID):
+    #simple logger to act as parameter for the functions
+    createRotatingLog(LOG_FILE)
+    Logger = logging.getLogger(LOG_OBJECT)
 
     #disable warnings for requests library
     requests.packages.urllib3.disable_warnings()
@@ -254,7 +287,7 @@ def audioConvert(text, filename, filepath, fileType, voiceID):
     if audioFormat['voxBool']:
         fullConvert(fileList)
         Logger.info("Vox filed created.")
-    Logger.info("Request ID: 375832948 (placeholder)")
+    Logger.info("Request ID: %s" % requestID)
 
     print("Audio file saved.")
 
@@ -267,7 +300,8 @@ def main():
     dataSet = getTranscriptData()
     for data in dataSet:
         newDict = editTranscriptData(data)
-        audioConvert(newDict["voiceTranscript"], newDict["filename"], newDict["filepath"],
+        audioConvert(newDict["identity"], newDict["voiceTranscript"],
+                     newDict["filename"], newDict["filepath"],
                      newDict["fileType"], newDict["voiceID"])
 
 
