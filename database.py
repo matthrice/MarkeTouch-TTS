@@ -238,11 +238,26 @@ def getTranscriptData():
     #returns database list
     return dbList
 
+def updateTranscriptData(requestID, status, errorCode):
+
+    #string to connect to the server
+    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" %
+                      (DB_DRIVER, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
+
+    #creating a connection object through the pypyodbc module
+    conn = pypyodbc.connect(connect_string1)
+    #cursor object for making changes or calling stored procedures
+    crsr = conn.cursor()
+    exStr = "UpdateTextToSpeechStaging %s, %s, %s" % (requestID, status, errorCode)
+    print exStr
+    #crsr.execute(exStr)
+
+
 #method to edit the data from the database to make it more usable
 #takes a single list from the list of lists and reformats it into a dictionary
 #does not take the full list of list from the server, this function must be used
 #in a for loop if fetchall() is called
-def editTranscriptData(dbList_1):
+def editData(dbList_1):
 
     #extracting json data using json module
     #loads the information into a dictionary, to be put into two variables
@@ -256,7 +271,6 @@ def editTranscriptData(dbList_1):
              'fileType': fileType, 'voiceID': voiceID}
 
     return dict1
-
 
 
 def audioConvert(requestID, text, filename, filepath, fileType, voiceID):
@@ -299,12 +313,14 @@ def audioConvert(requestID, text, filename, filepath, fileType, voiceID):
 def main():
     dataSet = getTranscriptData()
     for data in dataSet:
-        newDict = editTranscriptData(data)
+        newDict = editData(data)
         audioConvert(newDict["identity"], newDict["voiceTranscript"],
                      newDict["filename"], newDict["filepath"],
                      newDict["fileType"], newDict["voiceID"])
 
 
 #runs main function
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+    #main()
+
+updateTranscriptData(1, 2, 3)
