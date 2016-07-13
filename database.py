@@ -22,7 +22,7 @@ OGG_FORM = "audio/ogg;codecs=opus"
 
 #Information for logger
 MEGABYTE = 1000000 #number of bytes in a megabyte
-NOW = datetime.datetime.NOW()   #current time
+NOW = datetime.datetime.now()   #current time
 LOG_FILE = "maintest.log"
 LOG_OBJECT = "main_test_log"
 
@@ -213,8 +213,11 @@ def fullConvert(stringList):
 def getTranscriptData():
 
     #string to connect to the server
-    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" %
-                      (DB_DRIVER, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
+    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" % (DB_DRIVER,
+                                                                         DB_HOST,
+                                                                         DB_USER,
+                                                                         DB_PASSWORD,
+                                                                         DB_NAME)
 
     #creating a connection object through the pypyodbc module
     #object that defines server relationship
@@ -241,15 +244,18 @@ def getTranscriptData():
 def updateTranscriptData(requestID, status, errorCode):
 
     #string to connect to the server
-    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" %
-                      (DB_DRIVER, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
+    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" % (DB_DRIVER,
+                                                                         DB_HOST,
+                                                                         DB_USER,
+                                                                         DB_PASSWORD,
+                                                                         DB_NAME)
 
     #creating a connection object through the pypyodbc module
     conn = pypyodbc.connect(connect_string1)
     #cursor object for making changes or calling stored procedures
     crsr = conn.cursor()
     exStr = "UpdateTextToSpeechStaging %s, %s, %s" % (requestID, status, errorCode)
-    print exStr
+    print(exStr)
     #crsr.execute(exStr)
 
 
