@@ -5,10 +5,8 @@ import logging
 
 #module for http requests
 import requests
-#module for parsing json
-import json
 #module for accessing SQL server
-import pypyodbc
+import pyodbc
 
 from logging.handlers import RotatingFileHandler
 from watson import Watson
@@ -26,6 +24,7 @@ MEGABYTE = 1000000 #number of bytes in a megabyte
 NOW = datetime.datetime.now()   #current time
 LOG_FILE = "maintest.log"
 LOG_OBJECT = "main_test_log"
+COMPLETED = 3
 
 #Server Information
 DB_DRIVER = "{SQL Server}"
@@ -156,10 +155,7 @@ def fullConvert(stringList):
             convertToVox(wavPath, voxPath)
 
 
-def audioConvert(transcript):
-    #simple logger to act as parameter for the functions
-    createRotatingLog(LOG_FILE)
-    Logger = logging.getLogger(LOG_OBJECT)
+def audioConvert(Logger, transcript):
 
     #disable warnings for requests library
     requests.packages.urllib3.disable_warnings()
@@ -195,9 +191,9 @@ def getTranscriptData():
                                                                 DB_PASSWORD,
                                                                 DB_NAME)
 
-    #creating a connection object through the pypyodbc module
+    #creating a connection object through the pyodbc module
     #object that defines server relationship
-    conn = pypyodbc.connect(constr)
+    conn = pyodbc.connect(constr)
 
     #cursor object for making changes or calling stored procedures
     crsr = conn.cursor()
@@ -205,6 +201,7 @@ def getTranscriptData():
     #"GetTextToSpeechStaging" is a function that retrieves all the information
     #for a transcript, shown below
     crsr.execute("GetTextToSpeechStaging")
+
     #fetchall() retrieves all data in one execution
     #thus limiting the amount of times the stored procedure must be called to once
     dbList = (crsr.fetchall())
@@ -214,14 +211,22 @@ def getTranscriptData():
 
     conn.close()
 
-
+    return dbList
 
 def main():
+    # simple logger to act as parameter for the functions
+    createRotatingLog(LOG_FILE)
+    Logger = logging.getLogger(LOG_OBJECT)
+
     dataSet = getTranscriptData()
     for data in dataSet:
         transcript = Transcript(data)
-        if checkTranscript(transcript):
-            audioConvert(transcript)
+        if checkTranscript(Logger, transcript):
+            audioConvert(Logger, transcript)
+            transcript.setStatus(COMPLETED)
+            transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
+                                            DB_PASSWORD, DB_NAME)
+
 
 #runs main function
 if __name__ == "__main__":

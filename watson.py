@@ -21,7 +21,7 @@ class Watson():
 		self.username = username
 		self.password = password
 		self.url = url
-		self.chunk = CHUNK_SIZE
+		self.chunk = self.CHUNK_SIZE
 		self.transcript = transcript
 
 
@@ -29,7 +29,7 @@ class Watson():
 	#takes a string and parses the first word of the string. If it matches a
 	#watson supported language identifier, self.voice is changed accordingly
 	#If no change, voice is kept in default language
-	def changeVoice(self):
+	def changeVoice(self, string):
 		defaultLang = self.transcript.getVoice()
 
 		#Checks for a language change that is allowed in multiple files
@@ -109,17 +109,15 @@ class Watson():
 	#function to convert text to speech file
 	#REQUIRES: text is valid for conversion, filename ends in .wav
 	#EFFECTS: places a .wav file in the project folder
-	def download(self):
+	def download(self, text, filename):
 		#requests gets response using parameters for authorization and audio format
 		#stream=True allows it to be streamed as well
 		#verify=False ignores SSL certification
 
 		#initializes values from transcript to make code simpler
-		text = self.transcript.getTranscriptText()
 		voice = self.transcript.getVoice()
 		accept = self.transcript.getAccept() #returns a dictionary
 		path = self.transcript.getFilePath()
-		filename = self.transcript.getFileName()
 
 		r = requests.get(self.url + "/v1/synthesize",
                            auth=(self.username, self.password),
@@ -172,8 +170,7 @@ class Watson():
 		#each should begin with a specification of language
 		if len(stringList) == 1:
 			f = self.download(stringList[0],
-							  self.transcript.getFileName() + extension,
-							  self.transcript.getFilePath())
+							  self.transcript.getFileName() + extension)
 			fileList.append(f)
 
 		elif len(stringList) > 1:
@@ -183,9 +180,7 @@ class Watson():
 				b = self.changeVoice(string)
 				#downloads the file with an extension of its count
 				#appends the files in order in fileList
-				f = self.download(b, self.transcript.getFileName()
-								  + str(count) + extension,
-				 				  self.transcript.getFilePath())
+				f = self.download(b, self.transcript.getFileName() + str(count) + extension)
 				fileList.append(f)
 
 
