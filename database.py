@@ -3,12 +3,16 @@ import datetime
 import subprocess
 import logging
 
+#module for http requests
 import requests
+#module for parsing json
 import json
+#module for accessing SQL server
 import pypyodbc
 
 from logging.handlers import RotatingFileHandler
 from watson import Watson
+from transcript import Transcript
 
 #GLOBALS#
 
@@ -16,9 +20,6 @@ from watson import Watson
 URL = 'https://stream.watsonplatform.net/text-to-speech/api'
 PASSWORD = 'QiVBWYF2uBlJ'
 USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
-CHUNK_SIZE = 1024
-WAV_FORM = "audio/wav"
-OGG_FORM = "audio/ogg;codecs=opus"
 
 #Information for logger
 MEGABYTE = 1000000 #number of bytes in a megabyte
@@ -56,87 +57,36 @@ def createRotatingLog(path):
 
     return Logger
 
-
-#Bool method to assert whether the string is intended to return
-#True or False
-def yesOrNo(string):
-    if string == '1':
-        return True
-    if string == '0':
+#method for general error handling
+#checks the transcript data for errors
+#if the method comes across an error, it updates both the logger and the
+#database with an error code. Additionally, it immediately returns False
+#So if the data is invalid, the transcript won't be converted
+def checkTranscript(Logger, transcript):
+    if not transcript.checkFilename():
+        Logger.warning("Invalid input for filename: %s" % transcript.filename)
+        transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
+                                        DB_PASSWORD, DB_NAME)
         return False
-
-
-#Bool method that shows the input is valid (a 1 or a 0)
-def validBool(string):
-    if string == '1' or string == '0':
-        return True
-    else:
-        return False
-
-
-#Bool method that shows the filename does not contain bad characters
-def validFilename(string):
-    for c in string:
-        if c == ':' or c == '.':
-            return False
-
-    return True
-
-#method to request a text phrase to synthesize voice
-def checkPhrase(Logger, phrase):
-    #checks for empty input
-    if phrase == '':
+    elif not transcript.checkPhrase():
         Logger.warning("No text input")
+        transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
+                                        DB_PASSWORD, DB_NAME)
         return False
-
-    if len(phrase) < 2:
-        Logger.warning("Not enough text to synthesize")
+    elif not transcript.checkFormat():
+        Logger.warning("Invalid input for audio format: %s" % transcript.fileType)
+        transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
+                                        DB_PASSWORD, DB_NAME)
         return False
-
-    return True
-
-
-#method to receive format of audio from user
-#also recieves if the file is to be converted into vox
-#returns a dictionary, in the format of (accept, voxBool)
-def getFormat(Logger, formatType):
-    assert(formatType != 'ogg' or formatType != 'wav' or formatType != 'vox')
-    #adjusts the accept variable based on response
-    if formatType == 'wav':
-        accept = WAV_FORM
-        Logger.info("File type: .wav")
-        voxBool = False
-    elif formatType == 'ogg':
-        accept = OGG_FORM
-        Logger.info("File type: .ogg")
-        voxBool = False
-    elif formatType == 'vox':
-        accept = WAV_FORM
-        Logger.info("File type: .vox")
-        voxBool = True
-
-    return {'accept':accept, 'voxBool':voxBool}
-
-#method to receive filename from user
-def checkFilename(Logger, filename):
-    #filename and location input
-    if not validFilename(filename):
-        Logger.warning("Invalid input for filename: %s" % filename)
+    elif not transcript.checkFilePath():
+        Logger.warning("Directory in path does not exist: %s" % transcript.filepath)
+        transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
+                                        DB_PASSWORD, DB_NAME)
         return False
-
-    #logs filename
-    Logger.info("Filename: %s" % filename)
-
-    return True
-
-#method to receive filepath from user
-def checkPath(Logger, location):
-    #asserts that the path exists
-    if not os.path.isdir(location):
-        Logger.warning("Directory in path does not exist: %s" % location)
-        return False
-
-    return True
+    else:
+        transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
+                                        DB_PASSWORD, DB_NAME)
+        return True
 
 #method to initially convert ogg file to wav
 def convertToWav(filename):
@@ -206,22 +156,48 @@ def fullConvert(stringList):
             convertToVox(wavPath, voxPath)
 
 
-#method for getting transcript data from the SERVER
-#Server parameters and certification defined globally
-#returns a list of lists, with the inner lists containing all the info for the
-#specific text to speech staging
+def audioConvert(transcript):
+    #simple logger to act as parameter for the functions
+    createRotatingLog(LOG_FILE)
+    Logger = logging.getLogger(LOG_OBJECT)
+
+    #disable warnings for requests library
+    requests.packages.urllib3.disable_warnings()
+
+
+    #creates watson object
+    watson = Watson(USERNAME, PASSWORD, URL, transcript)
+
+
+    fileList = watson.writeFiles()
+    if transcript.getVoxBool():
+        fullConvert(fileList)
+        Logger.info("Vox filed created.")
+    Logger.info("Request ID: %s" % transcript.getIdentity())
+
+    print("Audio file saved.")
+
+    Logger.info("Download successful.")
+
+    #Indicates end of logging session, adds space between sessions
+    Logger.info("* File session ended *\n\n")
+
+#method to get the transcript data from the DATABASE
+#requires credentials to the database, utilizes GetTextToSpeechStaging stored proc
+#returns a list of lists, with the inner lists containing all the information
+#for individual transcripts
 def getTranscriptData():
 
     #string to connect to the server
-    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" % (DB_DRIVER,
-                                                                         DB_HOST,
-                                                                         DB_USER,
-                                                                         DB_PASSWORD,
-                                                                         DB_NAME)
+    constr = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" % (DB_DRIVER,
+                                                                DB_HOST,
+                                                                DB_USER,
+                                                                DB_PASSWORD,
+                                                                DB_NAME)
 
     #creating a connection object through the pypyodbc module
     #object that defines server relationship
-    conn = pypyodbc.connect(connect_string1)
+    conn = pypyodbc.connect(constr)
 
     #cursor object for making changes or calling stored procedures
     crsr = conn.cursor()
@@ -238,95 +214,15 @@ def getTranscriptData():
 
     conn.close()
 
-    #returns database list
-    return dbList
 
-def updateTranscriptData(requestID, status, errorCode):
-
-    #string to connect to the server
-    connect_string1 = "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s;DATABASE=%s" % (DB_DRIVER,
-                                                                         DB_HOST,
-                                                                         DB_USER,
-                                                                         DB_PASSWORD,
-                                                                         DB_NAME)
-
-    #creating a connection object through the pypyodbc module
-    conn = pypyodbc.connect(connect_string1)
-    #cursor object for making changes or calling stored procedures
-    crsr = conn.cursor()
-    exStr = "UpdateTextToSpeechStaging %s, %s, %s" % (requestID, status, errorCode)
-    print(exStr)
-    #crsr.execute(exStr)
-
-
-#method to edit the data from the database to make it more usable
-#takes a single list from the list of lists and reformats it into a dictionary
-#does not take the full list of list from the server, this function must be used
-#in a for loop if fetchall() is called
-def editData(dbList_1):
-
-    #extracting json data using json module
-    #loads the information into a dictionary, to be put into two variables
-    jsonItem = json.loads(dbList_1[4])
-    fileType = (jsonItem["fileType"])
-    voiceID = (jsonItem["voiceID"])
-
-    #creates a six part dictionary defining each necessity of the TTS staging
-    dict1 = {'identity': dbList_1[0], 'voiceTranscript': dbList_1[1],
-             'filename': dbList_1[2], 'filepath': dbList_1[3],
-             'fileType': fileType, 'voiceID': voiceID}
-
-    return dict1
-
-
-def audioConvert(requestID, text, filename, filepath, fileType, voiceID):
-    #simple logger to act as parameter for the functions
-    createRotatingLog(LOG_FILE)
-    Logger = logging.getLogger(LOG_OBJECT)
-
-    #disable warnings for requests library
-    requests.packages.urllib3.disable_warnings()
-
-    #checks valid text
-    assert(checkPhrase(Logger, text))
-
-    #audio format input
-    #returns a short dictionary
-    audioFormat = getFormat(Logger, fileType)
-
-    #filename and location input
-    assert(checkFilename(Logger, filename))
-    assert(checkPath(Logger, filepath))
-
-    #creates watson object
-    watson = Watson(USERNAME, PASSWORD, voiceID,
-                    URL, CHUNK_SIZE, audioFormat['accept'])
-
-
-    fileList = watson.writeFiles(text, filename, filepath)
-    if audioFormat['voxBool']:
-        fullConvert(fileList)
-        Logger.info("Vox filed created.")
-    Logger.info("Request ID: %s" % requestID)
-
-    print("Audio file saved.")
-
-    Logger.info("Download successful.")
-
-    #Indicates end of logging session, adds space between sessions
-    Logger.info("* File session ended *\n\n")
 
 def main():
     dataSet = getTranscriptData()
     for data in dataSet:
-        newDict = editData(data)
-        audioConvert(newDict["identity"], newDict["voiceTranscript"],
-                     newDict["filename"], newDict["filepath"],
-                     newDict["fileType"], newDict["voiceID"])
-
+        transcript = Transcript(data)
+        if checkTranscript(transcript):
+            audioConvert(transcript)
 
 #runs main function
-#if __name__ == "__main__":
-    #main()
-
-updateTranscriptData(1, 2, 3)
+if __name__ == "__main__":
+    main()
