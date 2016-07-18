@@ -158,11 +158,12 @@ def fullConvert(stringList):
 def audioConvert(Logger, transcript):
 
     #disable warnings for requests library
-    requests.packages.urllib3.disable_warnings()
+    #requests.packages.urllib3.disable_warnings()
 
 
     #creates watson object
     watson = Watson(USERNAME, PASSWORD, URL, transcript)
+    Logger.info("Filename: %s" % transcript.getFileName())
 
 
     fileList = watson.writeFiles()
@@ -218,10 +219,15 @@ def main():
     createRotatingLog(LOG_FILE)
     Logger = logging.getLogger(LOG_OBJECT)
 
+    #creates a list of lists out of the database transcripts
     dataSet = getTranscriptData()
+    #iterates through the lists
     for data in dataSet:
+        #creates a transcript object out of each piece of data
         transcript = Transcript(data)
+        #ensures the data is valid
         if checkTranscript(Logger, transcript):
+            #synthesizes transcript to audio
             audioConvert(Logger, transcript)
             transcript.setStatus(COMPLETED)
             transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
