@@ -1,3 +1,6 @@
+
+#######        TEXT TO SPEECH         #####
+
 ### PYTHON SCRIPT TO SYNTHESIZE AUDIO FROM TEXT ###
 
 #Receives the transcript data from database stored procedure
@@ -60,9 +63,9 @@ DB_PASSWORD = "evita"
 #requires path is valid
 #modifies log based on byte size and period of time
 #creates multiple logs, as well as deleting them after 30 days
-def createRotatingLog(path):
+def createRotatingLog(path, logObject):
     #initiates logging session
-    Logger = logging.getLogger("TTS")
+    Logger = logging.getLogger(logObject)
     Logger.setLevel(logging.DEBUG)
     #defines handler for byte size
     #will roll over after 100 mb, will max out at 10 backup files
@@ -115,6 +118,7 @@ def checkTranscript(Logger, transcript):
         return True
 
 #method to initially convert ogg file to wav
+#Uses ffmpeg
 def convertToWav(filename):
     #strips ogg extension and attaches .wav
     wavName = filename[:-4] + '2.wav'
@@ -132,6 +136,7 @@ def convertToWav(filename):
     return wavName
 
 #method to convert a wav file to a vox file, provided full path
+#uses vcecopy
 def convertToVox(filename, voxName):
     voxName = voxName[:-5] + ".vox"
     #creates command for vcecopy, another command line executable
@@ -192,7 +197,9 @@ def fullConvert(stringList):
 
         return "None"
 
-
+#Synthesizes the audio and carefully logs results
+#takes in the transcript and creates a watson object, checks validity
+#Only takes in one transcript at a time
 def synthesize(Logger, transcript):
 
     #disable warnings for requests library
@@ -254,9 +261,14 @@ def getTranscriptData():
 
     return dbList
 
+## MAIN ##
+
+#Uses a for loop to cycle through the data received in getTranscriptData()
+#In each cycle it creates a log and a transcript object
+#checks the transcript, and if it passes, it synthesizes the text to audio
+#Updates database with new information about the process
+#returns nothing
 def main():
-    # simple logger to act as parameter for the functions
-    createRotatingLog(LOG_FILE)
 
     #creates a list of lists out of the database transcripts
     dataSet = getTranscriptData()
@@ -264,8 +276,7 @@ def main():
     for data in dataSet:
         #creates a transcript object out of each piece of data
         transcript = Transcript(data)
-        #creates a log specified for the identitiy
-        Logger = logging.getLogger(str(transcript.getIdentity()))
+        Logger = createRotatingLog(LOG_FILE, str(transcript.getIdentity()))
         #ensures the data is valid
         if checkTranscript(Logger, transcript):
             #synthesizes transcript to audio
@@ -275,6 +286,6 @@ def main():
 
 
 
-#runs main function
+#runs main function, more usable as a module
 if __name__ == "__main__":
     main()

@@ -4,6 +4,11 @@ import os
 
 from transcript import Transcript
 
+## WATSON CLASS ##
+
+#Watson Class holds information for audio synthesis
+#Holds credentials for HTTP requests and transcript info
+#Contains functions to write and play the audio
 class Watson():
 
 	#streaming parameters
@@ -13,9 +18,9 @@ class Watson():
 
 	#download parameter
 	CHUNK_SIZE = 1024
+	GOOD_STATUS = 200
 
-	### CONSTRUCTOR ###
-
+	## CONSTRUCTOR ##
 	#initializes parameters for authorization and conversion
 	def __init__(self, username, password, url, transcript):
 		self.username = username
@@ -116,19 +121,26 @@ class Watson():
 		voice = self.transcript.getVoice()
 		accept = self.transcript.getAccept()  # returns a dictionary
 		path = self.transcript.getWavFilePath()
+		#replace \\ with \, pyodbc interprets the paths incorrectly
 		path = path.replace("\\\\", "\\")
+
+		#create HTTP request object
 		r = requests.get(self.url + "/v1/synthesize",
 						 auth=(self.username, self.password),
 						 params={'text': text, 'voice': voice, 'accept': accept},
 						 verify=False
 						 )
-		print(r.status_code)
 
-		if r.status_code != 200:
+		#Checks the status for a good http response
+		#If not good (200), sets the error and status code accordingly
+		if r.status_code != self.GOOD_STATUS:
 			self.transcript.setStatus(self.transcript.STATUS_ERROR)
 			self.transcript.setError(r.status_code)
+			#returns the error in the same format as a real listElement
+			#Each list element will be checked for "Error" later
 			return ["Error", str(r.status_code)]
 
+		#If the function continues, checks for path. Makes it if nonexistent
 		if not os.path.exists(path):
 			os.makedirs(path)
 
@@ -150,6 +162,8 @@ class Watson():
 	#files with a number extension marking their order if text uses multiple
 	#languages
 	def writeFiles(self):
+
+		#Command line indicator that the synthesis process is occuring
 		print("\nConverting text.\n")
 
 
@@ -173,10 +187,13 @@ class Watson():
 		#iterates through the strings in the list
 		#each should begin with a specification of language
 		if len(stringList) == 1:
+			#recieves list element from download function and appends it
 			f = self.download(stringList[0],
 							  self.transcript.getFileName() + extension)
 			fileList.append(f)
 
+		#process occurs differently if there's a split in the text string
+		#first checks for language change, then downloads
 		elif len(stringList) > 1:
 			for string in stringList:
 				count += 1
@@ -228,7 +245,8 @@ class Watson():
 				stream.write(dataToRead)
 				dataToRead = b''
 
-
+	#Plays files using the stream method above and the pyaudio module
+	#Requires a wav type audio file
 	def playFiles(self):
 		print("\nStreaming text.\n")
 

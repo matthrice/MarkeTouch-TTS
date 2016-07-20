@@ -2,27 +2,34 @@ import pyodbc
 import json
 import os
 
+## TRANSCRIPT CLASS ##
 
-
+#Class to hold all information provided by database for audio synthesis
+#Holds functions to ensure validity of user input
+#Holds functions to communicate with the database and update information
 class Transcript():
 
     ### CONSTANTS ###
 
+    #Nmbers for the status of the transcript, starts at pending
     STATUS_PENDING = 1
     STATUS_COMPLETE = 2
     STATUS_ERROR = 3
 
+    #two available audio forms pre-conversion
     WAV_FORM = "audio/wav"
     OGG_FORM = "audio/ogg;codecs=opus"
 
-    #Error codes
+    #Error codes, also specified in database.py
     ERR_TRANSCRIPT_TEXT = -1    #invalid text to be synthsized
     ERR_FILENAME = -2           #invalid filename
     ERR_AUDIO_FORMAT = -3       #invalid audio format type
     ERR_FILEPATH = -4           #invalid filepath
 
-    ### CONSTRUCTOR ###
-
+    ## CONSTRUCTOR ##
+    #Initializes the transcript object using a list of elements
+    #The list is the default form given by the pyodbc module
+    #Creating object straight from list requires minor tweaks
     def __init__(self, dataList):
 
         #extracting json data using json module and edits the information
@@ -43,7 +50,8 @@ class Transcript():
         self.errorCode = 0 #Null error on initialization
 
 
-    ### GETTER FUNCTIONS ###
+    ## GETTER FUNCTIONS ##
+    #methods used to retrieve member variables without affecting them
 
     #method to get identity
     def getIdentity(self):
@@ -95,9 +103,14 @@ class Transcript():
         else:
             return False
 
-    ### MEMBER FUNCTIONS ###
+    ## MEMBER FUNCTIONS ##
+
+    #CHECK fucntions used to create error codes and halt synthesis
+    #to avoid critical failures
 
     #method to check a text phrase to synthesize voice
+    #returns true or false to indicate validity of the phrase
+    #Phrase must not be empty, otherwise anything can be synthesized
     def checkPhrase(self):
         #checks for empty input
         if self.voiceTranscript == '':
@@ -108,6 +121,7 @@ class Transcript():
             return True
 
     #method to check validity of filename
+    #filename must not contain colons or periods, this changes from OS to OS
     def checkFilename(self):
         for c in self.filename:
             if c == ':' or c == '.':
@@ -118,6 +132,7 @@ class Transcript():
         return True
 
     #method to check validity of format type
+    #format must be one of the three available formats
     def checkFormat(self):
         #checks for 3 valid filetypes
         if (self.fileType != 'ogg' and self.fileType != 'wav' and self.fileType != 'vox'):
@@ -128,6 +143,8 @@ class Transcript():
             return True
 
     #method to check validity of filepath
+    #filepath must exist in the system
+    # (can be removed if you want the program to create its own directories)
     def checkVoxFilePath(self):
         #checks that path exists
         if not os.path.isdir(self.vox_filepath):
@@ -137,6 +154,7 @@ class Transcript():
         else:
             return True
 
+    #method that acts the same as above, but checks the wav file path
     def checkWavFilePath(self):
         if not os.path.isdir(self.vox_filepath):
             self.status = self.STATUS_ERROR
@@ -145,9 +163,14 @@ class Transcript():
         else:
             return True
 
+    ## SETTER FUNCTIONS ##
+    #methods to edit and update the transcript on the database
+
+    #method that sets the status variable to a new variable
     def setStatus(self, newStatus):
         self.status = newStatus
 
+    #method that sets the error code variable
     def setError(self, newError):
         self.errorCode = newError
 
@@ -174,4 +197,5 @@ class Transcript():
         crsr.execute(exStr)
         crsr.commit()
 
+        #close the connection
         conn.close()
