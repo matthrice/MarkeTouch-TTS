@@ -106,37 +106,42 @@ class Watson():
 		#returns the rest of the string after self.voice is changed
 		return b
 
-	#function to convert text to speech file
-	#REQUIRES: text is valid for conversion, filename ends in .wav
-	#EFFECTS: places a .wav file in the project folder
+
 	def download(self, text, filename):
-		#requests gets response using parameters for authorization and audio format
-		#stream=True allows it to be streamed as well
-		#verify=False ignores SSL certification
+		# requests gets response using parameters for authorization and audio format
+		# stream=True allows it to be streamed as well
+		# verify=False ignores SSL certification
 
-		#initializes values from transcript to make code simpler
+		# initializes values from transcript to make code simpler
 		voice = self.transcript.getVoice()
-		accept = self.transcript.getAccept() #returns a dictionary
-		path = self.transcript.getFilePath()
-
+		accept = self.transcript.getAccept()  # returns a dictionary
+		path = self.transcript.getWavFilePath()
+		path = path.replace("\\\\", "\\")
 		r = requests.get(self.url + "/v1/synthesize",
-                           auth=(self.username, self.password),
-                           params={'text': text, 'voice': voice,'accept': accept},
-                           verify=False
-                           )
-		#ensures path and directory exist
+						 auth=(self.username, self.password),
+						 params={'text': text, 'voice': voice, 'accept': accept},
+						 verify=False
+						 )
+		print(r.status_code)
+
+		if r.status_code != 200:
+			self.transcript.setStatus(self.transcript.STATUS_ERROR)
+			self.transcript.setError(r.status_code)
+			return ["Error", str(r.status_code)]
+
 		if not os.path.exists(path):
 			os.makedirs(path)
 
-		#opens filename from stream and saves it into filename
-		#'wb' indicates file is opened for writing in binary mode
-		#joins path and filename
+		# opens filename from stream and saves it into filename
+		# 'wb' indicates file is opened for writing in binary mode
+		# joins path and filename
 		with open(os.path.join(path, filename), 'wb') as fd:
 			for chunk in r.iter_content(self.chunk):
 				fd.write(chunk)
 
-		#extension lenght of file = 4 (". w a v")
+		# extension lenght of file = 4 (". w a v")
 		listElement = [path, filename[:-4]]
+
 		return listElement
 
 	#reads in input and determines if more than one file is needed to download
@@ -149,7 +154,6 @@ class Watson():
 
 
 		#saves english voice specification
-		english = self.transcript.getVoice()
 		text = self.transcript.getTranscriptText()
 		#creates a counter for the filenames
 		count = 0
@@ -199,8 +203,7 @@ class Watson():
 		text = self.transcript.getTranscriptText()
 		voice = self.transcript.getVoice()
 		accept = self.transcript.getAccept()
-		path = self.transcript.getFilePath()
-		filename = self.transcript.getFileName()
+
 
 		#request is made for the speech audio file, recieves response
 		#stream is set to true so the data will not be downloaded at once

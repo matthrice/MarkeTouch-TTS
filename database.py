@@ -1,3 +1,25 @@
+### PYTHON SCRIPT TO SYNTHESIZE AUDIO FROM TEXT ###
+
+#Receives the transcript data from database stored procedure
+#Takes data and edits it for audio conversion
+#Checks audio for errors, updates database status if so
+#Synthesizes audio as a wav, ogg, or vox file
+#Stores audio in desired location
+#Logs activity in a file and records errors in database
+
+## USER INPUT ERRORS ##
+
+# -1 : Invalid text input, can't be synthesized
+# -2 : Invalid filename
+# -3 : Invalid audio format type
+# -4 : Invalid filepath
+
+## HTTP ERRORS ##
+
+# 401 : Invalid username and password
+# 404 : Invalid voice
+# 406 : Invalid audio format
+
 import os
 import datetime
 import subprocess
@@ -12,7 +34,7 @@ from logging.handlers import RotatingFileHandler
 from watson import Watson
 from transcript import Transcript
 
-#GLOBALS#
+## GLOBALS ##
 
 #parameters for authorization and audio format
 URL = 'https://stream.watsonplatform.net/text-to-speech/api'
@@ -22,9 +44,8 @@ USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
 #Information for logger
 MEGABYTE = 1000000 #number of bytes in a megabyte
 NOW = datetime.datetime.now()   #current time
-LOG_FILE = "maintest.log"
-LOG_OBJECT = "main_test_log"
-COMPLETED = 3
+LOG_FILE = "info.txt"
+
 
 #Server Information
 DB_DRIVER = "{SQL Server}"
@@ -32,6 +53,7 @@ DB_HOST = "vbserv.archtelecom.com"
 DB_NAME = "bcastdb"
 DB_USER = "inetlog"
 DB_PASSWORD = "evita"
+
 
 
 #method for making a rotating log
@@ -77,8 +99,13 @@ def checkTranscript(Logger, transcript):
         transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
                                         DB_PASSWORD, DB_NAME)
         return False
-    elif not transcript.checkFilePath():
-        Logger.warning("Directory in path does not exist: %s" % transcript.filepath)
+    elif not transcript.checkVoxFilePath():
+        Logger.warning("Directory in path does not exist: %s" % transcript.wav_filepath)
+        transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
+                                        DB_PASSWORD, DB_NAME)
+        return False
+    elif not transcript.checkWavFilePath():
+        Logger.warning("Directory in path does not exist: %s" % transcript.vox_filepath)
         transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
                                         DB_PASSWORD, DB_NAME)
         return False
@@ -125,17 +152,22 @@ def fullConvert(stringList):
         for string in stringList:
             filepath = string[0]
             filename = string[1]
-            fullPath = filepath + '\\' + filename + '.wav'
-            print(fullPath)
-            #wavPath is the filepath to the newly converted file, ogg->wav
-            wavPath = convertToWav(fullPath)
-            #voxName is the new file for conversion, removes '.wav'
-            #and replaces it with '.vox', so the file will still have the user's
-            #desired name choice
-            voxPath = wavPath[:-4] + '.vox'
+            if filepath == "Error":
+                print("Unable to convert.")
+                return filepath
+            else:
+                fullPath = filepath + '\\' + filename + '.wav'
+                #wavPath is the filepath to the newly converted file, ogg->wav
+                wavPath = convertToWav(fullPath)
+                #voxName is the new file for conversion, removes '.wav'
+                #and replaces it with '.vox', so the file will still have the user's
+                #desired name choice
+                voxPath = wavPath[:-4] + '.vox'
 
-            #end conversion of wav->vox
-            convertToVox(wavPath, voxPath)
+                #end conversion of wav->vox
+                convertToVox(wavPath, voxPath)
+
+        return "None"
 
     #else clause for the event of merging multiple files
     else:
@@ -144,21 +176,27 @@ def fullConvert(stringList):
             filepath = string[0]
             filename = string[1]
 
-            fullPath = filepath + '\\' + filename + '.ogg'
-            wavPath = convertToWav(fullPath)
+            if filepath == "Error":
+                print("Unable to convert.")
+                return filename
+            else:
+                fullPath = filepath + '\\' + filename + '.ogg'
+                wavPath = convertToWav(fullPath)
 
-            #removes the .ogg extension as well as the numeric identifier
-            #that organizes the ogg/wav files.
-            #each file will be subsequently converted to the same vox name
-            #merging the files in the process
-            voxPath = fullPath[:-5] + '.vox'
-            convertToVox(wavPath, voxPath)
+                #removes the .ogg extension as well as the numeric identifier
+                #that organizes the ogg/wav files.
+                #each file will be subsequently converted to the same vox name
+                #merging the files in the process
+                voxPath = fullPath[:-5] + '.vox'
+                convertToVox(wavPath, voxPath)
+
+        return "None"
 
 
-def audioConvert(Logger, transcript):
+def synthesize(Logger, transcript):
 
     #disable warnings for requests library
-    #requests.packages.urllib3.disable_warnings()
+    requests.packages.urllib3.disable_warnings()
 
 
     #creates watson object
@@ -166,18 +204,21 @@ def audioConvert(Logger, transcript):
     Logger.info("Filename: %s" % transcript.getFileName())
 
 
+
     fileList = watson.writeFiles()
     if transcript.getVoxBool():
-        fullConvert(fileList)
-        Logger.info("Vox filed created.")
-    Logger.info("Request ID: %s" % transcript.getIdentity())
+        error = fullConvert(fileList)
+    if error == "Error":
+        Logger.info("Failure: %s" % transcript.getError())
+        Logger.info("Unsuccessful download.")
 
-    print("Audio file saved.")
+    if error == "None":
+        transcript.setStatus(transcript.STATUS_COMPLETE)
+        Logger.info("Successful download.")
 
-    Logger.info("Download successful.")
 
     #Indicates end of logging session, adds space between sessions
-    Logger.info("* File session ended *\n\n")
+    Logger.info("\n\n")
 
 #method to get the transcript data from the DATABASE
 #requires credentials to the database, utilizes GetTextToSpeechStaging stored proc
@@ -202,7 +243,6 @@ def getTranscriptData():
     #"GetTextToSpeechStaging" is a function that retrieves all the information
     #for a transcript, shown below
     crsr.execute("GetTextToSpeechStaging")
-
     #fetchall() retrieves all data in one execution
     #thus limiting the amount of times the stored procedure must be called to once
     dbList = (crsr.fetchall())
@@ -217,7 +257,6 @@ def getTranscriptData():
 def main():
     # simple logger to act as parameter for the functions
     createRotatingLog(LOG_FILE)
-    Logger = logging.getLogger(LOG_OBJECT)
 
     #creates a list of lists out of the database transcripts
     dataSet = getTranscriptData()
@@ -225,13 +264,15 @@ def main():
     for data in dataSet:
         #creates a transcript object out of each piece of data
         transcript = Transcript(data)
+        #creates a log specified for the identitiy
+        Logger = logging.getLogger(str(transcript.getIdentity()))
         #ensures the data is valid
         if checkTranscript(Logger, transcript):
             #synthesizes transcript to audio
-            audioConvert(Logger, transcript)
-            transcript.setStatus(COMPLETED)
-            transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
-                                            DB_PASSWORD, DB_NAME)
+            synthesize(Logger, transcript)
+            #transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
+                          #                  DB_PASSWORD, DB_NAME)
+
 
 
 #runs main function
