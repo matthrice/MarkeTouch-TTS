@@ -24,6 +24,7 @@
 # 406 : Invalid audio format
 
 import os
+import shutil
 import datetime
 import subprocess
 import logging
@@ -37,12 +38,19 @@ from logging.handlers import RotatingFileHandler
 from watson import Watson
 from transcript import Transcript
 
+
+
 ## GLOBALS ##
 
 #parameters for authorization and audio format
-URL = 'https://stream.watsonplatform.net/text-to-speech/api'
-PASSWORD = 'QiVBWYF2uBlJ'
-USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
+W_URL = 'https://stream.watsonplatform.net/text-to-speech/api'
+W_PASSWORD = 'QiVBWYF2uBlJ'
+W_USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
+
+#parameters for network authorization
+N_DOMAIN = "nurl"
+N_PASSWORD = "npassword"
+N_USERNAME = 'nusername'
 
 #Information for logger
 MEGABYTE = 1000000 #number of bytes in a megabyte
@@ -57,6 +65,9 @@ DB_NAME = "bcastdb"
 DB_USER = "inetlog"
 DB_PASSWORD = "evita"
 
+VCECOPY_PATH = r"C:\Users\mattr\TTS-app\MarkeTouch-TTS\copyfiles\vcecopy"
+FFMPEG_PATH = r"C:\Users\mattr\TTS-app\MarkeTouch-TTS\copyfiles\ffmpeg"
+FINAL_PATH = r"\VSTORE1\ivrfiles\vbx\vmail\master.vox"
 
 
 #method for making a rotating log
@@ -123,7 +134,7 @@ def convertToWav(filename):
     #strips ogg extension and attaches .wav
     wavName = filename[:-4] + '2.wav'
     #creates command line for ffmpeg
-    command = ["ffmpeg", "-i", filename, wavName]
+    command = [FFMPEG_PATH, "-i", filename, wavName]
     #ffmpeg is a service for command line conversion
     #used specifically because it ignores bad header information (Watson .wav)
     #called through subprocess to return converted file
@@ -137,19 +148,23 @@ def convertToWav(filename):
 
 #method to convert a wav file to a vox file, provided full path
 #uses vcecopy
-def convertToVox(filename, voxName):
-    voxName = voxName[:-5] + ".vox"
+def convertToVox(filename, voxPath):
+    voxName = filename[:-5] + ".vox"
+
     #creates command for vcecopy, another command line executable
     #vcecopy handles wav -> vox conversion
-    command = [r"copyfiles\vcecopy", "-m", ",1", "-c4", filename, voxName]
+    command = [VCECOPY_PATH, "-m", ",1", "-c4", filename, voxName]
     subprocess.call(command, shell=True)
 
-    #removes wav file
+    #move the file from the wavfiles folder to the transcript's path
+    shutil.move(voxName, voxPath)
+
+    #removes wav file (vox file already removed)
     os.remove(filename)
 
 #method to convert ogg file to vox
 #ties together methods above to create a single command conversion
-def fullConvert(stringList):
+def fullConvert(stringList, voxPath):
     #with only one element in the list, conversion is simple
     #extract filename, end with vox, convert
     if len(stringList) == 1:
@@ -167,7 +182,8 @@ def fullConvert(stringList):
                 #voxName is the new file for conversion, removes '.wav'
                 #and replaces it with '.vox', so the file will still have the user's
                 #desired name choice
-                voxPath = wavPath[:-4] + '.vox'
+                voxPath = voxPath + filename + '.vox'
+                print(voxPath)
 
                 #end conversion of wav->vox
                 convertToVox(wavPath, voxPath)
@@ -192,7 +208,7 @@ def fullConvert(stringList):
                 #that organizes the ogg/wav files.
                 #each file will be subsequently converted to the same vox name
                 #merging the files in the process
-                voxPath = fullPath[:-5] + '.vox'
+                voxPath = voxPath + filename + '.vox'
                 convertToVox(wavPath, voxPath)
 
         return "None"
@@ -205,16 +221,17 @@ def synthesize(Logger, transcript):
     #disable warnings for requests library
     requests.packages.urllib3.disable_warnings()
 
+    print(transcript.getVoxFilePath())
 
     #creates watson object
-    watson = Watson(USERNAME, PASSWORD, URL, transcript)
+    watson = Watson(W_USERNAME, W_PASSWORD, W_URL, transcript)
+    Logger.info("Request ID: %s" % transcript.getIdentity())
     Logger.info("Filename: %s" % transcript.getFileName())
-
-
+    Logger.info("Audio format: %s" % transcript.checkFormat())
 
     fileList = watson.writeFiles()
     if transcript.getVoxBool():
-        error = fullConvert(fileList)
+        error = fullConvert(fileList, transcript.getVoxFilePath())
     if error == "Error":
         Logger.info("Failure: %s" % transcript.getError())
         Logger.info("Unsuccessful download.")
@@ -269,7 +286,6 @@ def getTranscriptData():
 #Updates database with new information about the process
 #returns nothing
 def main():
-
     #creates a list of lists out of the database transcripts
     dataSet = getTranscriptData()
     #iterates through the lists
@@ -282,8 +298,7 @@ def main():
             #synthesizes transcript to audio
             synthesize(Logger, transcript)
             #transcript.updateTranscriptData(DB_DRIVER, DB_HOST, DB_USER,
-                          #                  DB_PASSWORD, DB_NAME)
-
+                                            #DB_PASSWORD, DB_NAME)
 
 
 #runs main function, more usable as a module

@@ -43,7 +43,7 @@ class Transcript():
         self.voiceTranscript = dataList[1]
         self.filename = dataList[2]
         self.vox_filepath = dataList[3]
-        self.wav_filepath = dataList[4]
+        self.wav_filepath = "wavfiles"
         self.fileType = filetype
         self.voiceID = voice
         self.status = self.STATUS_PENDING
