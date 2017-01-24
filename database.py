@@ -43,9 +43,9 @@ from transcript import Transcript
 ## GLOBALS ##
 
 #parameters for authorization and audio format
-W_URL = 'https://stream.watsonplatform.net/text-to-speech/api'
-W_PASSWORD = 'QiVBWYF2uBlJ'
-W_USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
+W_URL = 'WATSON_URL'
+W_PASSWORD = 'WATSON_PASSWORD'
+W_USERNAME = 'WATSON_USERNAME'
 
 #parameters for network authorization
 N_DOMAIN = "nurl"
@@ -60,14 +60,14 @@ LOG_FILE = "info.txt"
 
 #Server Information
 DB_DRIVER = "{SQL Server}"
-DB_HOST = "vbserv.archtelecom.com"
-DB_NAME = "bcastdb"
-DB_USER = "inetlog"
-DB_PASSWORD = "evita"
+DB_HOST = "SERVER_HOST"
+DB_NAME = "SERVER_NAME"
+DB_USER = "SERVER_USER"
+DB_PASSWORD = "SERVER_PASSWORD"
 
-VCECOPY_PATH = r"C:\Users\mattr\TTS-app\MarkeTouch-TTS\copyfiles\vcecopy"
-FFMPEG_PATH = r"C:\Users\mattr\TTS-app\MarkeTouch-TTS\copyfiles\ffmpeg"
-FINAL_PATH = r"\VSTORE1\ivrfiles\vbx\vmail\master.vox"
+VCECOPY_PATH = r"path to vcecopy executable"
+FFMPEG_PATH = r"path to ffmpeg executable"
+FINAL_PATH = r"path for storage of product"
 
 
 #method for making a rotating log
