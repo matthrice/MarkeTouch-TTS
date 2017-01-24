@@ -31,9 +31,9 @@ import sys
 argList = sys.argv
 
 #parameters for authorization and audio format
-URL = 'https://stream.watsonplatform.net/text-to-speech/api'
-PASSWORD = 'QiVBWYF2uBlJ'
-USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
+URL = 'WATSON_URL'
+PASSWORD = 'WATSON_PASSWORD'
+USERNAME = 'WATSON_USERNAME'
 CHUNK_SIZE = 1024
 
 #Information for logger
@@ -42,10 +42,10 @@ now = datetime.datetime.now()   #current time
 
 #parameters for database connection
 DB_DRIVER = "{SQL Server}"
-DB_HOST = "vbserv.archtelecom.com"
-DB_NAME = "bcastdb"
-DB_USER = "inetlog"
-DB_PASSWORD = "evita"
+DB_HOST = "SERVER_HOST"
+DB_NAME = "SERVER_NAME"
+DB_USER = "SERVER_USER"
+DB_PASSWORD = "SERVER_PASSWORD"
 
 #method for making a rotating log
 #REQUIRES: Path is valid
