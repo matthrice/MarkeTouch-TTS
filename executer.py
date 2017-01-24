@@ -3,9 +3,9 @@ import requests
 import os
 import wave
 
-URL = 'https://stream.watsonplatform.net/text-to-speech/api'
-PASSWORD = 'QiVBWYF2uBlJ'
-USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
+URL = 'WATSON_URL'
+PASSWORD = 'WATSON_PASSWORD'
+USERNAME = 'WATSON_USERNAME'
 CHUNK_SIZE = 1024
 
 def download(text, filename, path):
@@ -151,16 +151,16 @@ def fullConvert(stringList):
             #os.remove(string)
 
 '''full test of executer'''
-strList = writeFiles("*English hi how are you", "middletest", "wavfiles") #writes a temporary wave file to convert
-fullConvert(strList)
+#strList = writeFiles("*English hi how are you", "middletest", "wavfiles") #writes a temporary wave file to convert
+#fullConvert(strList)
 
 
 '''simple test of watson-produced wave'''
-#subprocess.call(r"copyfiles\vcecopy.exe wavfiles\hello.wav wavfiles\hello.vox")
+#subprocess.call(r"<path to vcecopy exe> <path to wav> <path to vox>")
 
 '''simple test of sample wave'''
-#subprocess.call(r"copyfiles\vcecopy.exe wavfiles\piano2.wav wavfiles\piano2.vox")
+#subprocess.call(r"<path to vcecopy exe> <path to wav> <path to vox>)
 
 '''wave parameter testing'''
-#getParams(r"wavfiles\test3.wav")
-#getParams(r"wavfiles\piano2.wav")
+#getParams(r"path to wav")
+#getParams(r"path to wav")
