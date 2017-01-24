@@ -7,9 +7,9 @@ import datetime
 import subprocess
 
 #parameters for authorization and audio format
-URL = 'https://stream.watsonplatform.net/text-to-speech/api'
-PASSWORD = 'QiVBWYF2uBlJ'
-USERNAME = 'be745e3d-8ee2-47b6-806a-cee0ac2a6683'
+URL = 'WATSON_URL'
+PASSWORD = 'WATSON_PASSWORD'
+USERNAME = 'WATSON_USERNAME'
 CHUNK_SIZE = 1024
 #Information for logger
 MEGABYTE = 1000000 #number of bytes in a megabyte
